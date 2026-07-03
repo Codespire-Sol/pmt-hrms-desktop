@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/Favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="HRMS - Modern Human Resource Management" />
+  <meta name="theme-color" content="#2563eb" />
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/Favicon.png" />
+
+  <title>HRMS</title>
+  <!-- Runtime env vars injected by docker-entrypoint.sh at container startup.
+       MUST be in <head> — Vite moves the main bundle <script type="module"> to
+       <head> during production build, so this must come first to ensure
+       window.__ENV__ is set before Keycloak initializes. -->
+  <script src="/config/env.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

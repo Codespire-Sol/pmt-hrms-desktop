@@ -1,0 +1,34 @@
+# Self-host build for the PMT/HRMS API.
+# Unlike the CI Dockerfile (which packages a pre-built dist/ artifact), this
+# image compiles TypeScript from source so `docker compose build` works for
+# anyone who just cloned the repo. Not tuned for CI artifact-size limits.
+
+# ── Stage 1: build (full deps + tsc) ────────────────────────────────────────
+FROM node:22-alpine AS build
+WORKDIR /app
+RUN apk add --no-cache python3 make g++ vips-dev
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN corepack install && pnpm install --frozen-lockfile
+COPY . .
+# Generate Prisma client, then compile TS -> dist/
+RUN pnpm exec prisma generate --config prisma/prisma.config.mjs \
+    && pnpm build
+
+# ── Stage 2: runtime (prod deps only) ───────────────────────────────────────
+FROM node:22-alpine
+RUN apk add --no-cache tini vips
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN corepack install && pnpm install --frozen-lockfile --prod
+# Prisma schema + migrations + config are needed at runtime for `migrate deploy`
+COPY prisma/ ./prisma/
+RUN pnpm exec prisma generate --config prisma/prisma.config.mjs
+# Compiled app
+COPY --from=build /app/dist/ ./dist/
+COPY docker-entrypoint.selfhost.sh ./
+RUN chmod +x docker-entrypoint.selfhost.sh && mkdir -p uploads
+
+EXPOSE 4000
+ENTRYPOINT ["/sbin/tini", "--", "./docker-entrypoint.selfhost.sh"]

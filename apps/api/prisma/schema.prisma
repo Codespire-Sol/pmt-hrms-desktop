@@ -1,0 +1,4125 @@
+// ProjectFlow API - Prisma Schema
+// Migrated from Knex.js query builder
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum ProjectStatus {
+  active
+  archived
+  on_hold
+  completed
+
+  @@map("project_status")
+}
+
+enum ProjectVisibility {
+  private
+  internal
+  public
+
+  @@map("project_visibility")
+}
+
+enum ProjectMemberRole {
+  admin
+  lead
+  member
+  viewer
+
+  @@map("project_member_role")
+}
+
+// StatusCategory enum removed — category is now a free-form VARCHAR(50)
+// Default built-in categories: todo, in_progress, in_review, done
+
+enum SprintStatus {
+  planned
+  active
+  completed
+  cancelled
+
+  @@map("sprint_status")
+}
+
+enum IssueLinkType {
+  blocks
+  is_blocked_by
+  duplicates
+  is_duplicated_by
+  relates_to
+  causes
+  is_caused_by
+  clones
+  is_cloned_by
+
+  @@map("issue_link_type")
+}
+
+enum IssueChangeType {
+  create
+  update
+  delete
+
+  @@map("issue_change_type")
+}
+
+enum CustomFieldType {
+  text
+  number
+  date
+  datetime
+  select
+  multiselect
+  checkbox
+  url
+  email
+  user
+
+  @@map("custom_field_type")
+}
+
+enum DashboardType {
+  user
+  project
+
+  @@map("dashboard_type")
+}
+
+enum DashboardPermission {
+  view
+  edit
+
+  @@map("dashboard_permission")
+}
+
+enum SavedFilterVisibility {
+  private
+  project
+  global
+
+  @@map("saved_filter_visibility")
+}
+
+enum ScreenOperation {
+  create
+  view
+  edit
+  transition
+
+  @@map("screen_operation")
+}
+
+enum WipLimitType {
+  soft
+  hard
+
+  @@map("wip_limit_type")
+}
+
+enum WebhookMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+
+  @@map("webhook_method")
+}
+
+enum WebhookDeliveryStatus {
+  pending
+  success
+  failed
+  retrying
+
+  @@map("webhook_delivery_status")
+}
+
+enum WebhookPayloadFormat {
+  json
+  form
+
+  @@map("webhook_payload_format")
+}
+
+enum AutomationTriggerType {
+  issue_created
+  issue_updated
+  issue_transitioned
+  issue_assigned
+  issue_commented
+  sprint_started
+  sprint_completed
+  scheduled
+  manual
+
+  @@map("automation_trigger_type")
+}
+
+enum AutomationExecutionStatus {
+  pending
+  running
+  success
+  failure
+  skipped
+
+  @@map("automation_execution_status")
+}
+
+enum TransitionConditionType {
+  required_fields
+  field_value
+  permission
+  assignee
+  reporter
+  resolution
+  custom_script
+  linked_issues
+  subtasks_done
+  time_logged
+  approval
+  project_role
+
+  @@map("transition_condition_type")
+}
+
+enum TransitionValidatorType {
+  validate_regex
+  validate_date_range
+  validate_numeric_range
+  validate_email
+  validate_url
+  validate_custom
+
+  @@map("transition_validator_type")
+}
+
+enum TransitionPostfunctionType {
+  set_field
+  copy_field
+  clear_field
+  assign_to_reporter
+  assign_to_lead
+  unassign
+  add_comment
+  add_watcher
+  send_notification
+  update_parent
+  trigger_webhook
+
+  @@map("transition_postfunction_type")
+}
+
+enum ApprovalDecision {
+  approved
+  rejected
+
+  @@map("approval_decision")
+}
+
+enum IssueTransitionApprovalStatus {
+  pending
+  approved
+  rejected
+  expired
+
+  @@map("issue_transition_approval_status")
+}
+
+enum VersionStatus {
+  unreleased
+  released
+  archived
+
+  @@map("version_status")
+}
+
+enum EpicStatus {
+  to_do
+  in_progress
+  done
+
+  @@map("epic_status")
+}
+
+enum WipViolationAction {
+  override
+  blocked
+
+  @@map("wip_violation_action")
+}
+
+enum RecentItemEntityType {
+  issue
+  project
+  user
+  comment
+
+  @@map("recent_item_entity_type")
+}
+
+enum ScreenTabFieldType {
+  system
+  custom
+
+  @@map("screen_tab_field_type")
+}
+
+enum EmployeeStatus {
+  onboarding
+  active
+  notice_period
+  exited
+  deleted
+
+  @@map("employee_status")
+}
+
+enum EmployeeMaritalStatus {
+  single
+  married
+  divorced
+  widowed
+
+  @@map("employee_marital_status")
+}
+
+enum Gender {
+  male
+  female
+  other
+
+  @@map("gender")
+}
+
+enum AttendanceStatus {
+  checked_in
+  present
+  absent
+  half_day
+  incomplete
+  on_leave
+  holiday
+
+  @@map("attendance_status")
+}
+
+enum HolidayType {
+  national
+  regional
+  company
+  optional
+
+  @@map("holiday_type")
+}
+
+enum LeaveType {
+  casual
+  sick
+  earned
+  lop
+
+  @@map("leave_type")
+}
+
+enum LeaveSession {
+  full_day
+  first_half
+  second_half
+
+  @@map("leave_session")
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+  cancelled
+
+  @@map("leave_status")
+}
+
+enum PayrollStatus {
+  draft
+  generated
+  finalized
+
+  @@map("payroll_status")
+}
+
+enum OnboardingStatus {
+  in_progress
+  completed
+
+  @@map("onboarding_status")
+}
+
+enum OffboardingStatus {
+  in_progress
+  completed
+
+  @@map("offboarding_status")
+}
+
+enum OffboardingReason {
+  resignation
+  termination
+  end_of_contract
+  other
+
+  @@map("offboarding_reason")
+}
+
+enum ApprovalResourceType {
+  leave
+  attendance_correction
+  profile_change
+
+  @@map("approval_resource_type")
+}
+
+enum ApprovalApproverType {
+  manager
+  hr
+  admin
+
+  @@map("approval_approver_type")
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+  cancelled
+  escalated
+
+  @@map("approval_status")
+}
+
+enum ApprovalPriority {
+  low
+  normal
+  high
+  urgent
+
+  @@map("approval_priority")
+}
+
+enum ApprovalResponse {
+  approved
+  rejected
+  delegated
+
+  @@map("approval_response")
+}
+
+// ============================================================
+// CORE MODELS
+// ============================================================
+
+model User {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email               String    @unique @db.VarChar(255)
+  passwordHash        String?   @map("password_hash") @db.VarChar(255)
+  firstName           String    @map("first_name") @db.VarChar(100)
+  lastName            String    @map("last_name") @db.VarChar(100)
+  avatarUrl           String?   @map("avatar_url") @db.VarChar(500)
+  phone               String?   @db.VarChar(20)
+  timezone            String?   @default("UTC") @db.VarChar(50)
+  locale              String?   @default("en") @db.VarChar(10)
+  isActive            Boolean   @default(true) @map("is_active")
+  isVerified          Boolean   @default(false) @map("is_verified")
+  emailVerifiedAt     DateTime? @map("email_verified_at")
+  lastLoginAt         DateTime? @map("last_login_at")
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until")
+  passwordChangedAt   DateTime? @map("password_changed_at")
+  twoFactorEnabled    Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret     String?   @map("two_factor_secret") @db.VarChar(255)
+  keycloakSub         String?   @unique @map("keycloak_sub") @db.VarChar(255)
+  roleId              String?   @map("role_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  // Relations
+  role                       Role?                             @relation(fields: [roleId], references: [id])
+  ownedProjects              Project[]                         @relation("ProjectOwner")
+  leadProjects               Project[]                         @relation("ProjectLead")
+  defaultAssigneeProjects    Project[]                         @relation("ProjectDefaultAssignee")
+  projectMemberships         ProjectMember[]
+  invitedMembers             ProjectMember[]                   @relation("InvitedBy")
+  reportedIssues             Issue[]                           @relation("IssueReporter")
+  assignedIssues             Issue[]                           @relation("IssueAssignee")
+  comments                   Comment[]
+  attachments                Attachment[]
+  notifications              Notification[]
+  actedNotifications         Notification[]                    @relation("NotificationActor")
+  refreshTokens              RefreshToken[]
+  timeLogs                   TimeLog[]
+  activeTimer                ActiveTimer?
+  issueWatchers              IssueWatcher[]
+  issueVotes                 IssueVote[]
+  issueLabelsAdded           IssueLabel[]
+  issueHistory               IssueHistory[]
+  activityLogs               ActivityLog[]
+  commentReactions           CommentReaction[]
+  auditLogs                  AuditLog[]
+  createdSprints             Sprint[]                          @relation("SprintCreatedBy")
+  completedSprints           Sprint[]                          @relation("SprintCompletedBy")
+  emailVerificationTokens    EmailVerificationToken[]
+  passwordResetTokens        PasswordResetToken[]
+  oauthProviders             OauthProvider[]
+  twoFactorBackupCodes       TwoFactorBackupCode[]
+  notificationPreferences    NotificationPreference[]
+  pushSubscriptions          PushSubscription[]
+  savedFilters               SavedFilter[]
+  filterSubscriptions        FilterSubscription[]
+  dashboardPreferences       DashboardPreference[]
+  dashboardSharesCreated     DashboardShare[]                  @relation("ShareCreatedBy")
+  dashboardSharesReceived    DashboardShare[]                  @relation("ShareUser")
+  scheduledReports           ScheduledReport[]
+  customFieldValues          IssueCustomFieldValue[]
+  userSkills                 UserSkill[]
+  timePredictions            TimePrediction[]
+  aiRecommendationsActed     AiRecommendation[]                @relation("RecommendationActedBy")
+  aiFeedback                 AiFeedback[]
+  aiRequestLogs              AiRequestLog[]
+  aiUsage                    AiUsage[]
+  automationRules            AutomationRule[]
+  automationExecutions       AutomationRuleExecution[]         @relation("ExecutionTriggeredByUser")
+  webhooksCreated            Webhook[]
+  slackInstallations         SlackWorkspace[]
+  slackUserMappings          SlackUserMapping[]
+  githubConnection           GithubConnection?
+  gitlabConnection           GitlabConnection?
+  calendarIntegrations       CalendarIntegration[]
+  calendarEventMappings      CalendarEventMapping[]
+  dueDateReminders           DueDateReminder[]
+  recentItems                RecentItem[]
+  searchHistory              SearchHistory[]
+  savedSearches              SavedSearch[]
+  issueLinkCreator           IssueLink[]
+  issueTransitionRequests    IssueTransitionApproval[]         @relation("TransitionRequestedBy")
+  approvalResponses          IssueTransitionApprovalResponse[]
+  wipLimitViolations         WipLimitViolation[]
+  aiSuggestions              AiSuggestion[]
+  commentMentions            CommentMention[]
+  resourceRates              ResourceRate[]
+  employee                   Employee?                         @relation("EmployeeUser")
+  employeesCreated           Employee[]                        @relation("EmployeeCreatedBy")
+  employeesUpdated           Employee[]                        @relation("EmployeeUpdatedBy")
+  employeesDeleted           Employee[]                        @relation("EmployeeDeletedBy")
+  attendanceCorrections      Attendance[]                      @relation("AttendanceCorrectedBy")
+  attendanceCreated          Attendance[]                      @relation("AttendanceCreatedBy")
+  holidaysCreated            Holiday[]                         @relation("HolidayCreatedBy")
+  holidaysUpdated            Holiday[]                         @relation("HolidayUpdatedBy")
+  leaveApprovals             Leave[]                           @relation("LeaveApprovedBy")
+  leaveRejections            Leave[]                           @relation("LeaveRejectedBy")
+  payrollUploads             Payroll[]                         @relation("PayrollUploadedBy")
+  payrollFinalizations       Payroll[]                         @relation("PayrollFinalizedBy")
+  payrollLocks               PayrollLock[]                     @relation("PayrollLockedBy")
+  onboardingCompletions      Onboarding[]                      @relation("OnboardingCompletedBy")
+  onboardingTaskCompletions  OnboardingTask[]                  @relation("OnboardingTaskCompletedBy")
+  offboardingInitiations     Offboarding[]                     @relation("OffboardingInitiatedBy")
+  offboardingCompletions     Offboarding[]                     @relation("OffboardingCompletedBy")
+  offboardingTaskCompletions OffboardingTask[]                 @relation("OffboardingTaskCompletedBy")
+  approvalsAssigned          Approval[]                        @relation("ApprovalApprover")
+  approvalsCurrentlyAssigned Approval[]                        @relation("ApprovalCurrentApprover")
+  approvalHistoryActions     ApprovalHistory[]                 @relation("ApprovalHistoryActedBy")
+  systemSettingsUpdated      SystemSetting[]                   @relation("SystemSettingUpdatedBy")
+  createdEpics               Epic[]                            @relation("EpicCreator")
+  pagesCreated               Page[]                            @relation("PageCreatedBy")
+  userGroupMemberships       UserGroupMember[]
+  userPermissions            UserPermission[]
+  grantedPermissions         UserPermission[]  @relation("UserPermissionGranter")
+
+  @@index([isActive])
+  @@index([deletedAt])
+  @@index([roleId])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @unique @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(100)
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  level       Int      @default(0)
+  /// Which app created this custom role: 'hrms' | 'pmt' | null (null = system/global)
+  app         String?  @db.VarChar(10)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  users              User[]
+  rolePermissions    RolePermission[]
+  securityLevelRoles SecurityLevelRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String  @unique @db.VarChar(100)
+  displayName String  @map("display_name") @db.VarChar(200)
+  description String?
+  resource    String  @db.VarChar(50)
+  action      String  @db.VarChar(50)
+  /// Which application owns this permission: 'hrms' | 'pmt' | 'global'
+  app         String  @default("pmt") @db.VarChar(20)
+
+  // Relations
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  @@unique([resource, action])
+  @@index([app])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserPermission {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  grantedBy    String?  @map("granted_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  granter    User?      @relation("UserPermissionGranter", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@map("user_permissions")
+}
+
+// ============================================================
+// PROJECT MODELS
+// ============================================================
+
+model Project {
+  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key               String            @unique @db.VarChar(10)
+  name              String            @db.VarChar(200)
+  description       String?
+  ownerId           String            @map("owner_id") @db.Uuid
+  leadId            String?           @map("lead_id") @db.Uuid
+  categoryId        String?           @map("category_id") @db.Uuid
+  category          String?           @db.VarChar(100)
+  status            ProjectStatus     @default(active)
+  visibility        ProjectVisibility @default(private)
+  startDate         DateTime?         @map("start_date") @db.Date
+  targetEndDate     DateTime?         @map("target_end_date") @db.Date
+  actualEndDate     DateTime?         @map("actual_end_date") @db.Date
+  defaultAssigneeId String?           @map("default_assignee_id") @db.Uuid
+  settings          Json?             @default("{}")
+  metadata          Json?             @default("{}")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
+
+  // Relations
+  owner                  User                    @relation("ProjectOwner", fields: [ownerId], references: [id])
+  lead                   User?                   @relation("ProjectLead", fields: [leadId], references: [id])
+  defaultAssignee        User?                   @relation("ProjectDefaultAssignee", fields: [defaultAssigneeId], references: [id])
+  projectCategory        ProjectCategory?        @relation(fields: [categoryId], references: [id])
+  members                ProjectMember[]
+  issues                 Issue[]
+  sprints                Sprint[]
+  workflows              Workflow[]
+  issueTypes             IssueType[]
+  labels                 Label[]
+  components             Component[]
+  versions               Version[]
+  epics                  Epic[]
+  boards                 Board[]
+  customFields           CustomField[]
+  automationRules        AutomationRule[]
+  webhooks               Webhook[]
+  notifications          Notification[]
+  activityLogs           ActivityLog[]
+  securityLevels         SecurityLevel[]
+  screens                Screen[]
+  screenSchemes          ScreenScheme[]
+  issueTypeScreenSchemes IssueTypeScreenScheme[]
+  scheduledReports       ScheduledReport[]
+  aiProjectConfig        AiProjectConfig?
+  aiRequestLogs          AiRequestLog[]
+  aiFeedback             AiFeedback[]
+  aiUsage                AiUsage[]
+  aiRecommendations      AiRecommendation[]
+  slackWorkspace         SlackWorkspace?
+  githubRepository       GithubRepository?
+  gitlabRepository       GitlabRepository?
+  templates              ProjectTemplate[]
+  savedFilters           SavedFilter[]
+  pages                  Page[]
+  budget                 ProjectBudget?
+  resourceRates          ResourceRate[]
+  budgetAlerts           BudgetAlert[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([categoryId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId String            @map("project_id") @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  role      ProjectMemberRole @default(member)
+  joinedAt  DateTime          @default(now()) @map("joined_at")
+  invitedBy String?           @map("invited_by") @db.Uuid
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter User?   @relation("InvitedBy", fields: [invitedBy], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model ProjectCategory {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?
+  color       String?  @db.VarChar(7)
+  icon        String?  @db.VarChar(50)
+  isActive    Boolean  @default(true) @map("is_active")
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  projects Project[]
+
+  @@map("project_categories")
+}
+
+model ProjectTemplate {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  projectId   String   @map("project_id") @db.Uuid
+  config      Json     @default("{}")
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_templates")
+}
+
+// ============================================================
+// FINANCIAL MODELS
+// ============================================================
+
+model ProjectBudget {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId        String   @unique @map("project_id") @db.Uuid
+  totalBudget      Decimal  @map("total_budget") @db.Decimal(12, 2)
+  currency         String   @default("USD") @db.VarChar(10)
+  alertThreshold   Decimal  @default(0.80) @map("alert_threshold") @db.Decimal(3, 2)
+  warningThreshold Decimal  @default(0.90) @map("warning_threshold") @db.Decimal(3, 2)
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_budgets")
+}
+
+model ResourceRate {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId     String    @map("project_id") @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  role          String    @db.VarChar(100)
+  hourlyRate    Decimal   @map("hourly_rate") @db.Decimal(10, 2)
+  currency      String    @default("USD") @db.VarChar(10)
+  effectiveFrom DateTime  @default(now()) @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("resource_rates")
+}
+
+model BudgetAlert {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId        String   @map("project_id") @db.Uuid
+  alertType        String   @map("alert_type") @db.VarChar(50)
+  thresholdPercent Decimal  @map("threshold_percent") @db.Decimal(5, 2)
+  currentSpend     Decimal  @map("current_spend") @db.Decimal(12, 2)
+  totalBudget      Decimal  @map("total_budget") @db.Decimal(12, 2)
+  triggeredAt      DateTime @default(now()) @map("triggered_at")
+  isRead           Boolean  @default(false) @map("is_read")
+  metadata         Json     @default("{}")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([isRead])
+  @@map("budget_alerts")
+}
+
+// ============================================================
+// WORKFLOW MODELS
+// ============================================================
+
+model Workflow {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String?  @map("project_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?
+  isDefault   Boolean  @default(false) @map("is_default")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project     Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  statuses    Status[]
+  transitions StatusTransition[]
+
+  @@index([projectId])
+  @@map("workflows")
+}
+
+model Status {
+  id          String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowId  String         @map("workflow_id") @db.Uuid
+  name        String         @db.VarChar(50)
+  displayName String         @map("display_name") @db.VarChar(100)
+  description String?
+  color       String?        @db.VarChar(7)
+  category    String         @default("todo") @db.VarChar(50)
+  position    Int            @default(0)
+  isInitial   Boolean        @default(false) @map("is_initial")
+  isFinal     Boolean        @default(false) @map("is_final")
+  wipLimit    Int?           @map("wip_limit")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  workflow           Workflow           @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  issues             Issue[]
+  transitionsFrom    StatusTransition[] @relation("TransitionFrom")
+  transitionsTo      StatusTransition[] @relation("TransitionTo")
+  boardColumns       BoardColumn[]
+  githubRepositories GithubRepository[]
+
+  @@unique([workflowId, name])
+  @@index([workflowId])
+  @@map("statuses")
+}
+
+model StatusTransition {
+  id           String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowId   String  @map("workflow_id") @db.Uuid
+  fromStatusId String  @map("from_status_id") @db.Uuid
+  toStatusId   String  @map("to_status_id") @db.Uuid
+  name         String? @db.VarChar(100)
+
+  // Relations
+  workflow       Workflow                         @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  fromStatus     Status                           @relation("TransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
+  toStatus       Status                           @relation("TransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
+  conditions     WorkflowTransitionCondition[]
+  validators     WorkflowTransitionValidator[]
+  postfunctions  WorkflowTransitionPostfunction[]
+  approvalConfig WorkflowTransitionApproval?
+  issueApprovals IssueTransitionApproval[]
+
+  @@unique([workflowId, fromStatusId, toStatusId])
+  @@map("status_transitions")
+}
+
+model IssueType {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String   @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(100)
+  description String?
+  icon        String?  @db.VarChar(50)
+  color       String?  @db.VarChar(7)
+  isSubtask   Boolean  @default(false) @map("is_subtask")
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project                    Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues                     Issue[]
+  issueTypeScreenSchemeItems IssueTypeScreenSchemeItem[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("issue_types")
+}
+
+model IssuePriority {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @unique @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(100)
+  icon        String?  @db.VarChar(50)
+  color       String?  @db.VarChar(7)
+  level       Int
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issues Issue[]
+
+  @@map("issue_priorities")
+}
+
+model Label {
+  id          String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String  @map("project_id") @db.Uuid
+  name        String  @db.VarChar(50)
+  color       String? @db.VarChar(7)
+  description String?
+
+  // Relations
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issueLabels IssueLabel[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("labels")
+}
+
+// ============================================================
+// ISSUE MODELS
+// ============================================================
+
+/// @trigger set_issue_number - auto-increments issue_number per project
+/// @trigger update_issues_updated_at - auto-updates updated_at
+/// @trigger issues_search_vector_update - maintains search_vector tsvector
+model Issue {
+  id                     String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId              String                   @map("project_id") @db.Uuid
+  issueNumber            Int                      @map("issue_number")
+  parentId               String?                  @map("parent_id") @db.Uuid
+  typeId                 String                   @map("type_id") @db.Uuid
+  statusId               String                   @map("status_id") @db.Uuid
+  priorityId             String?                  @map("priority_id") @db.Uuid
+  title                  String                   @db.VarChar(500)
+  description            String?
+  descriptionHtml        String?                  @map("description_html")
+  reporterId             String                   @map("reporter_id") @db.Uuid
+  assigneeId             String?                  @map("assignee_id") @db.Uuid
+  sprintId               String?                  @map("sprint_id") @db.Uuid
+  epicId                 String?                  @map("epic_id") @db.Uuid
+  storyPoints            Int?                     @map("story_points")
+  originalEstimateHours  Decimal?                 @map("original_estimate_hours") @db.Decimal(10, 2)
+  remainingEstimateHours Decimal?                 @map("remaining_estimate_hours") @db.Decimal(10, 2)
+  timeSpentHours         Decimal?                 @default(0) @map("time_spent_hours") @db.Decimal(10, 2)
+  dueDate                DateTime?                @map("due_date") @db.Date
+  startDate              DateTime?                @map("start_date") @db.Date
+  resolution             String?                  @db.VarChar(100)
+  resolutionDate         DateTime?                @map("resolution_date")
+  environment            String?
+  affectedVersion        String?                  @map("affected_version") @db.VarChar(50)
+  fixVersion             String?                  @map("fix_version") @db.VarChar(50)
+  components             String[]                 @default([])
+  position               Int                      @default(0)
+  commentCount           Int                      @default(0) @map("comment_count")
+  attachmentCount        Int                      @default(0) @map("attachment_count")
+  voteCount              Int                      @default(0) @map("vote_count")
+  watcherCount           Int                      @default(0) @map("watcher_count")
+  securityLevelId        String?                  @map("security_level_id") @db.Uuid
+  searchVector           Unsupported("tsvector")? @map("search_vector")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at")
+  deletedAt              DateTime?                @map("deleted_at")
+
+  // Relations
+  project                  Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent                   Issue?                    @relation("IssueParent", fields: [parentId], references: [id])
+  children                 Issue[]                   @relation("IssueParent")
+  type                     IssueType                 @relation(fields: [typeId], references: [id])
+  status                   Status                    @relation(fields: [statusId], references: [id])
+  priority                 IssuePriority?            @relation(fields: [priorityId], references: [id])
+  reporter                 User                      @relation("IssueReporter", fields: [reporterId], references: [id])
+  assignee                 User?                     @relation("IssueAssignee", fields: [assigneeId], references: [id])
+  sprint                   Sprint?                   @relation(fields: [sprintId], references: [id])
+  epic                     Epic?                     @relation(fields: [epicId], references: [id], onDelete: SetNull)
+  securityLevel            SecurityLevel?            @relation(fields: [securityLevelId], references: [id])
+  issueLabels              IssueLabel[]
+  comments                 Comment[]
+  attachments              Attachment[]
+  watchers                 IssueWatcher[]
+  votes                    IssueVote[]
+  sourceLinks              IssueLink[]               @relation("SourceIssue")
+  targetLinks              IssueLink[]               @relation("TargetIssue")
+  history                  IssueHistory[]
+  activityLogs             ActivityLog[]
+  timeLogs                 TimeLog[]
+  activeTimers             ActiveTimer[]
+  notifications            Notification[]
+  issueComponents          IssueComponent[]
+  customFieldValues        IssueCustomFieldValue[]
+  issueEmbedding           IssueEmbedding?
+  dueDateReminders         DueDateReminder[]
+  calendarEventMappings    CalendarEventMapping[]
+  githubCommits            GithubCommit[]
+  githubPullRequests       GithubPullRequest[]
+  githubBranches           GithubBranch[]
+  gitlabCommits            GitlabCommit[]
+  gitlabMergeRequests      GitlabMergeRequest[]
+  gitlabBranches           GitlabBranch[]
+  buildRuns                BuildRun[]
+  aiSuggestions            AiSuggestion[]
+  aiFeedback               AiFeedback[]
+  aiRecommendations        AiRecommendation[]
+  timePredictions          TimePrediction[]
+  automationExecutions     AutomationRuleExecution[] @relation("ExecutionTriggeredByIssue")
+  issueTransitionApprovals IssueTransitionApproval[]
+  wipLimitViolations       WipLimitViolation[]
+
+  @@unique([projectId, issueNumber])
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([reporterId])
+  @@index([statusId])
+  @@index([typeId])
+  @@index([parentId])
+  @@index([sprintId])
+  @@index([epicId])
+  @@index([dueDate])
+  @@index([priorityId])
+  @@index([securityLevelId])
+  @@map("issues")
+}
+
+model IssueLabel {
+  id      String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId String   @map("issue_id") @db.Uuid
+  labelId String   @map("label_id") @db.Uuid
+  addedAt DateTime @default(now()) @map("added_at")
+  addedBy String?  @map("added_by") @db.Uuid
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [addedBy], references: [id])
+
+  @@unique([issueId, labelId])
+  @@index([issueId])
+  @@index([labelId])
+  @@map("issue_labels")
+}
+
+model IssueLink {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sourceIssueId String   @map("source_issue_id") @db.Uuid
+  targetIssueId String   @map("target_issue_id") @db.Uuid
+  linkTypeId    String   @map("link_type_id") @db.Uuid
+  createdBy     String   @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sourceIssue Issue    @relation("SourceIssue", fields: [sourceIssueId], references: [id], onDelete: Cascade)
+  targetIssue Issue    @relation("TargetIssue", fields: [targetIssueId], references: [id], onDelete: Cascade)
+  linkType    LinkType @relation(fields: [linkTypeId], references: [id])
+  creator     User     @relation(fields: [createdBy], references: [id])
+
+  @@unique([sourceIssueId, targetIssueId, linkTypeId])
+  @@index([sourceIssueId])
+  @@index([targetIssueId])
+  @@map("issue_links")
+}
+
+model LinkType {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @unique @db.VarChar(50)
+  inward      String   @db.VarChar(100)
+  outward     String   @db.VarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issueLinks IssueLink[]
+
+  @@map("link_types")
+}
+
+model IssueHistory {
+  id         String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId    String          @map("issue_id") @db.Uuid
+  userId     String          @map("user_id") @db.Uuid
+  fieldName  String          @map("field_name") @db.VarChar(100)
+  oldValue   String?         @map("old_value")
+  newValue   String?         @map("new_value")
+  oldValueId String?         @map("old_value_id") @db.Uuid
+  newValueId String?         @map("new_value_id") @db.Uuid
+  changeType IssueChangeType @default(update) @map("change_type")
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([issueId])
+  @@index([createdAt])
+  @@map("issue_history")
+}
+
+model IssueWatcher {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId   String   @map("issue_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@map("issue_watchers")
+}
+
+model IssueVote {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId   String   @map("issue_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@map("issue_votes")
+}
+
+model IssueEmbedding {
+  id        String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId   String                       @unique @map("issue_id") @db.Uuid
+  embedding Unsupported("vector(1536)")?
+  createdAt DateTime                     @default(now()) @map("created_at")
+  updatedAt DateTime                     @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@map("issue_embeddings")
+}
+
+// ============================================================
+// COMMENT MODELS
+// ============================================================
+
+model Comment {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId     String    @map("issue_id") @db.Uuid
+  authorId    String    @map("author_id") @db.Uuid
+  parentId    String?   @map("parent_id") @db.Uuid
+  content     String
+  contentHtml String?   @map("content_html")
+  isEdited    Boolean   @default(false) @map("is_edited")
+  editedAt    DateTime? @map("edited_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  issue         Issue             @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author        User              @relation(fields: [authorId], references: [id])
+  parent        Comment?          @relation("CommentParent", fields: [parentId], references: [id])
+  children      Comment[]         @relation("CommentParent")
+  reactions     CommentReaction[]
+  mentions      CommentMention[]
+  attachments   Attachment[]
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+
+  @@index([issueId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model CommentReaction {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  commentId String   @map("comment_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  emoji     String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@map("comment_reactions")
+}
+
+model CommentMention {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  commentId String   @map("comment_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_mentions")
+}
+
+// ============================================================
+// SPRINT MODELS
+// ============================================================
+
+model Sprint {
+  id                 String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId          String       @map("project_id") @db.Uuid
+  name               String       @db.VarChar(200)
+  goal               String?
+  status             SprintStatus @default(planned)
+  startDate          DateTime?    @map("start_date") @db.Date
+  endDate            DateTime?    @map("end_date") @db.Date
+  actualStartDate    DateTime?    @map("actual_start_date") @db.Date
+  actualEndDate      DateTime?    @map("actual_end_date") @db.Date
+  capacityHours      Decimal?     @map("capacity_hours") @db.Decimal(10, 2)
+  sequence           Int          @default(0)
+  createdBy          String       @map("created_by") @db.Uuid
+  completedBy        String?      @map("completed_by") @db.Uuid
+  retrospectiveNotes String?      @map("retrospective_notes")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator               User                   @relation("SprintCreatedBy", fields: [createdBy], references: [id])
+  completer             User?                  @relation("SprintCompletedBy", fields: [completedBy], references: [id])
+  issues                Issue[]
+  sprintMetrics         SprintMetric[]
+  aiRecommendations     AiRecommendation[]
+  calendarEventMappings CalendarEventMapping[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("sprints")
+}
+
+model SprintMetric {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sprintId             String   @map("sprint_id") @db.Uuid
+  date                 DateTime @db.Date
+  totalIssues          Int      @default(0) @map("total_issues")
+  completedIssues      Int      @default(0) @map("completed_issues")
+  totalStoryPoints     Int      @default(0) @map("total_story_points")
+  completedStoryPoints Int      @default(0) @map("completed_story_points")
+  totalHours           Decimal  @default(0) @map("total_hours") @db.Decimal(10, 2)
+  completedHours       Decimal  @default(0) @map("completed_hours") @db.Decimal(10, 2)
+  addedIssues          Int      @default(0) @map("added_issues")
+  removedIssues        Int      @default(0) @map("removed_issues")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sprint Sprint @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+
+  @@unique([sprintId, date])
+  @@index([sprintId])
+  @@map("sprint_metrics")
+}
+
+// ============================================================
+// TIME TRACKING MODELS
+// ============================================================
+
+model TimeLog {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId     String    @map("issue_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  hours       Decimal   @db.Decimal(10, 2)
+  description String?
+  workDate    DateTime  @map("work_date") @db.Date
+  startedAt   DateTime? @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+  isBillable  Boolean   @default(true) @map("is_billable")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([issueId])
+  @@index([userId])
+  @@index([workDate])
+  @@index([userId, workDate])
+  @@index([issueId, workDate])
+  @@index([userId, issueId, workDate])
+  @@map("time_logs")
+}
+
+model ActiveTimer {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId             String    @unique @map("user_id") @db.Uuid
+  issueId            String    @map("issue_id") @db.Uuid
+  startedAt          DateTime  @default(now()) @map("started_at")
+  description        String?
+  isPaused           Boolean   @default(false) @map("is_paused")
+  pausedAt           DateTime? @map("paused_at")
+  totalPausedSeconds Int       @default(0) @map("total_paused_seconds")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@map("active_timers")
+}
+
+// ============================================================
+// ATTACHMENT MODEL
+// ============================================================
+
+model Attachment {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId          String?   @map("issue_id") @db.Uuid
+  commentId        String?   @map("comment_id") @db.Uuid
+  uploadedBy       String    @map("uploaded_by") @db.Uuid
+  filename         String    @db.VarChar(255)
+  originalFilename String    @map("original_filename") @db.VarChar(255)
+  mimeType         String    @map("mime_type") @db.VarChar(100)
+  fileSize         Int       @map("file_size")
+  storagePath      String    @map("storage_path") @db.VarChar(500)
+  thumbnailPath    String?   @map("thumbnail_path") @db.VarChar(500)
+  metadata         Json?     @default("{}")
+  parentId         String?   @map("parent_id") @db.Uuid
+  versionNumber    Int       @default(1) @map("version_number")
+  isLatestVersion  Boolean   @default(true) @map("is_latest_version")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  // Relations
+  issue            Issue?       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  comment          Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  uploader         User         @relation(fields: [uploadedBy], references: [id])
+  parentAttachment Attachment?  @relation("AttachmentVersion", fields: [parentId], references: [id])
+  versions         Attachment[] @relation("AttachmentVersion")
+
+  @@index([issueId])
+  @@index([commentId])
+  @@index([uploadedBy])
+  @@index([createdAt])
+  @@map("attachments")
+}
+
+// ============================================================
+// NOTIFICATION MODELS
+// ============================================================
+
+model Notification {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(255)
+  message   String
+  actorId   String?   @map("actor_id") @db.Uuid
+  issueId   String?   @map("issue_id") @db.Uuid
+  commentId String?   @map("comment_id") @db.Uuid
+  projectId String?   @map("project_id") @db.Uuid
+  metadata  Json?     @default("{}")
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor   User?    @relation("NotificationActor", fields: [actorId], references: [id])
+  issue   Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([type])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  notificationType String   @map("notification_type") @db.VarChar(50)
+  inAppEnabled     Boolean  @default(true) @map("in_app_enabled")
+  emailEnabled     Boolean  @default(true) @map("email_enabled")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType])
+  @@map("notification_preferences")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// ============================================================
+// AUTH MODELS
+// ============================================================
+
+model RefreshToken {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @map("token_hash")
+  deviceInfo Json?     @map("device_info")
+  ipAddress  String?   @map("ip_address")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model OauthProvider {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  provider     String    @db.VarChar(50)
+  providerId   String    @map("provider_id") @db.VarChar(255)
+  accessToken  String?   @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  profile      Json?     @default("{}")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@unique([userId, provider])
+  @@map("oauth_providers")
+}
+
+model TwoFactorBackupCode {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  code      String    @db.VarChar(20)
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_backup_codes")
+}
+
+// ============================================================
+// ACTIVITY & AUDIT MODELS
+// ============================================================
+
+model ActivityLog {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId   String?  @map("issue_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  action    String   @db.VarChar(50)
+  fieldName String?  @map("field_name") @db.VarChar(100)
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  commentId String?  @map("comment_id") @db.Uuid
+  projectId String?  @map("project_id") @db.Uuid
+  metadata  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue   Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([issueId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("activity_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  entityType String   @map("entity_type") @db.VarChar(100)
+  entityId   String?  @map("entity_id") @db.Uuid
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent")
+  metadata   Json?    @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// CUSTOM FIELDS MODELS
+// ============================================================
+
+model CustomField {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId       String          @map("project_id") @db.Uuid
+  name            String          @db.VarChar(200)
+  fieldKey        String          @map("field_key") @db.VarChar(100)
+  description     String?
+  fieldType       CustomFieldType @map("field_type")
+  options         Json?           @default("[]")
+  validation      Json?           @default("{}")
+  defaultValue    Json?           @map("default_value")
+  isRequired      Boolean         @default(false) @map("is_required")
+  isFilterable    Boolean         @default(true) @map("is_filterable")
+  isVisibleInList Boolean         @default(true) @map("is_visible_in_list")
+  position        Int             @default(0)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  // Relations
+  project Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  values  IssueCustomFieldValue[]
+
+  @@unique([projectId, fieldKey])
+  @@index([projectId])
+  @@map("custom_fields")
+}
+
+model IssueCustomFieldValue {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId       String   @map("issue_id") @db.Uuid
+  customFieldId String   @map("custom_field_id") @db.Uuid
+  value         Json
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy     String?  @map("created_by") @db.Uuid
+
+  // Relations
+  issue       Issue       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  customField CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+  creator     User?       @relation(fields: [createdBy], references: [id])
+
+  @@unique([issueId, customFieldId])
+  @@map("issue_custom_field_values")
+}
+
+// ============================================================
+// COMPONENT & VERSION MODELS
+// ============================================================
+
+model Component {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId         String   @map("project_id") @db.Uuid
+  name              String   @db.VarChar(200)
+  description       String?
+  leadId            String?  @map("lead_id") @db.Uuid
+  defaultAssigneeId String?  @map("default_assignee_id") @db.Uuid
+  color             String?  @db.VarChar(7)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issueComponents IssueComponent[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("components")
+}
+
+model IssueComponent {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId     String   @map("issue_id") @db.Uuid
+  componentId String   @map("component_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue     Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  component Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, componentId])
+  @@map("issue_components")
+}
+
+model Version {
+  id                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId         String        @map("project_id") @db.Uuid
+  name              String        @db.VarChar(100)
+  description       String?
+  status            VersionStatus @default(unreleased)
+  releaseDate       DateTime?     @map("release_date") @db.Date
+  startDate         DateTime?     @map("start_date") @db.Date
+  actualReleaseDate DateTime?     @map("actual_release_date")
+  releasedBy        String?       @map("released_by") @db.Uuid
+  position          Int           @default(0)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("versions")
+}
+
+// ============================================================
+// EPICS
+// ============================================================
+
+model Epic {
+  id          String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String     @map("project_id") @db.Uuid
+  name        String     @db.VarChar(200)
+  summary     String?    @db.VarChar(500)
+  description String?
+  color       String     @default("#6366f1") @db.VarChar(7)
+  status      EpicStatus @default(to_do)
+  startDate   DateTime?  @map("start_date") @db.Date
+  endDate     DateTime?  @map("end_date") @db.Date
+  position    Int        @default(0)
+  createdBy   String     @map("created_by") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator User    @relation("EpicCreator", fields: [createdBy], references: [id])
+  issues  Issue[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@index([createdBy])
+  @@map("epics")
+}
+
+// ============================================================
+// SECURITY LEVELS
+// ============================================================
+
+model SecurityLevel {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?
+  color       String?  @db.VarChar(7)
+  position    Int      @default(0)
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues             Issue[]
+  securityLevelRoles SecurityLevelRole[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("security_levels")
+}
+
+model SecurityLevelRole {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  securityLevelId String   @map("security_level_id") @db.Uuid
+  roleId          String   @map("role_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  securityLevel SecurityLevel @relation(fields: [securityLevelId], references: [id], onDelete: Cascade)
+  role          Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([securityLevelId, roleId])
+  @@map("security_level_roles")
+}
+
+// ============================================================
+// BOARD MODELS
+// ============================================================
+
+model Board {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  name      String   @db.VarChar(200)
+  type      String   @default("kanban") @db.VarChar(50)
+  config    Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns       BoardColumn[]
+  settings      BoardSettings?
+  wipViolations WipLimitViolation[]
+
+  @@index([projectId])
+  @@map("boards")
+}
+
+model BoardColumn {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  boardId         String       @map("board_id") @db.Uuid
+  statusId        String       @map("status_id") @db.Uuid
+  name            String       @db.VarChar(100)
+  position        Int          @default(0)
+  wipLimit        Int?         @map("wip_limit")
+  wipLimitEnabled Boolean      @default(false) @map("wip_limit_enabled")
+  wipLimitType    WipLimitType @default(soft) @map("wip_limit_type")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  board         Board               @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  status        Status              @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  wipViolations WipLimitViolation[]
+
+  @@unique([boardId, statusId])
+  @@index([boardId])
+  @@map("board_columns")
+}
+
+model BoardSettings {
+  id                 String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  boardId            String       @unique @map("board_id") @db.Uuid
+  wipLimitsEnabled   Boolean      @default(false) @map("wip_limits_enabled")
+  defaultWipType     WipLimitType @default(soft) @map("default_wip_type")
+  showWipWarnings    Boolean      @default(true) @map("show_wip_warnings")
+  trackWipViolations Boolean      @default(true) @map("track_wip_violations")
+  swimlaneWipLimits  Json         @default("{}") @map("swimlane_wip_limits")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_settings")
+}
+
+model WipLimitViolation {
+  id          String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  boardId     String             @map("board_id") @db.Uuid
+  columnId    String             @map("column_id") @db.Uuid
+  issueId     String             @map("issue_id") @db.Uuid
+  userId      String             @map("user_id") @db.Uuid
+  action      WipViolationAction
+  limitAtTime Int                @map("limit_at_time")
+  countAtTime Int                @map("count_at_time")
+  reason      String?
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  board  Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  column BoardColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  issue  Issue       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id])
+
+  @@index([boardId])
+  @@index([columnId])
+  @@index([createdAt])
+  @@map("wip_limit_violations")
+}
+
+// ============================================================
+// SCREEN MODELS
+// ============================================================
+
+model Screen {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tabs              ScreenTab[]
+  screenSchemeItems ScreenSchemeItem[]
+
+  @@index([projectId])
+  @@map("screens")
+}
+
+model ScreenTab {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  screenId  String   @map("screen_id") @db.Uuid
+  name      String   @db.VarChar(100)
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  screen Screen           @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  fields ScreenTabField[]
+
+  @@index([screenId])
+  @@map("screen_tabs")
+}
+
+model ScreenTabField {
+  id         String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tabId      String             @map("tab_id") @db.Uuid
+  fieldName  String             @map("field_name") @db.VarChar(100)
+  fieldType  ScreenTabFieldType @default(system) @map("field_type")
+  isRequired Boolean            @default(false) @map("is_required")
+  position   Int                @default(0)
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  tab ScreenTab @relation(fields: [tabId], references: [id], onDelete: Cascade)
+
+  @@unique([tabId, fieldName])
+  @@map("screen_tab_fields")
+}
+
+model ScreenScheme {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project                    Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items                      ScreenSchemeItem[]
+  issueTypeScreenSchemeItems IssueTypeScreenSchemeItem[]
+
+  @@index([projectId])
+  @@map("screen_schemes")
+}
+
+model ScreenSchemeItem {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  screenSchemeId String          @map("screen_scheme_id") @db.Uuid
+  screenId       String          @map("screen_id") @db.Uuid
+  operation      ScreenOperation
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  screenScheme ScreenScheme @relation(fields: [screenSchemeId], references: [id], onDelete: Cascade)
+  screen       Screen       @relation(fields: [screenId], references: [id], onDelete: Cascade)
+
+  @@unique([screenSchemeId, operation])
+  @@map("screen_scheme_items")
+}
+
+model IssueTypeScreenScheme {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   IssueTypeScreenSchemeItem[]
+
+  @@index([projectId])
+  @@map("issue_type_screen_schemes")
+}
+
+model IssueTypeScreenSchemeItem {
+  id                      String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueTypeScreenSchemeId String   @map("issue_type_screen_scheme_id") @db.Uuid
+  issueTypeId             String?  @map("issue_type_id") @db.Uuid
+  screenSchemeId          String   @map("screen_scheme_id") @db.Uuid
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issueTypeScreenScheme IssueTypeScreenScheme @relation(fields: [issueTypeScreenSchemeId], references: [id], onDelete: Cascade)
+  issueType             IssueType?            @relation(fields: [issueTypeId], references: [id], onDelete: Cascade)
+  screenScheme          ScreenScheme          @relation(fields: [screenSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([issueTypeScreenSchemeId, issueTypeId])
+  @@map("issue_type_screen_scheme_items")
+}
+
+// ============================================================
+// SAVED FILTER & SEARCH MODELS
+// ============================================================
+
+model SavedFilter {
+  id          String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String                @map("user_id") @db.Uuid
+  projectId   String?               @map("project_id") @db.Uuid
+  name        String                @db.VarChar(200)
+  description String?
+  jql         String?
+  filters     Json                  @default("{}")
+  visibility  SavedFilterVisibility @default(private)
+  isFavorite  Boolean               @default(false) @map("is_favorite")
+  usageCount  Int                   @default(0) @map("usage_count")
+  lastUsedAt  DateTime?             @map("last_used_at")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subscriptions FilterSubscription[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@map("saved_filters")
+}
+
+model FilterSubscription {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  filterId     String   @map("filter_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  isFavorite   Boolean  @default(false) @map("is_favorite")
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+
+  // Relations
+  filter SavedFilter @relation(fields: [filterId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([filterId, userId])
+  @@index([userId])
+  @@map("filter_subscriptions")
+}
+
+model RecentItem {
+  id         String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String               @map("user_id") @db.Uuid
+  entityType RecentItemEntityType @map("entity_type")
+  entityId   String               @map("entity_id") @db.Uuid
+  accessedAt DateTime             @default(now()) @map("accessed_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@map("recent_items")
+}
+
+model SearchHistory {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  query       String   @db.VarChar(500)
+  resultCount Int      @default(0) @map("result_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("search_history")
+}
+
+model SavedSearch {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  query       String   @db.VarChar(500)
+  filters     Json     @default("{}")
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_searches")
+}
+
+// ============================================================
+// DASHBOARD MODELS
+// ============================================================
+
+model DashboardPreference {
+  id        String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  type      DashboardType @default(user)
+  projectId String?       @map("project_id") @db.Uuid
+  layout    Json          @default("[]")
+  widgets   Json          @default("[]")
+  settings  Json          @default("{}")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares DashboardShare[]
+
+  @@unique([userId, type, projectId])
+  @@map("dashboard_preferences")
+}
+
+model DashboardShare {
+  id          String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dashboardId String              @map("dashboard_id") @db.Uuid
+  createdBy   String              @map("created_by") @db.Uuid
+  shareType   String              @map("share_type") @db.VarChar(20)
+  userId      String?             @map("user_id") @db.Uuid
+  permission  DashboardPermission @default(view)
+  publicToken String?             @unique @map("public_token") @db.VarChar(100)
+  expiresAt   DateTime?           @map("expires_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  dashboard  DashboardPreference @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  creator    User                @relation("ShareCreatedBy", fields: [createdBy], references: [id])
+  sharedUser User?               @relation("ShareUser", fields: [userId], references: [id])
+
+  @@map("dashboard_shares")
+}
+
+// ============================================================
+// SCHEDULED REPORTS
+// ============================================================
+
+model ScheduledReport {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  projectId   String?   @map("project_id") @db.Uuid
+  name        String    @db.VarChar(255)
+  reportType  String    @map("report_type") @db.VarChar(50)
+  format      String    @default("pdf") @db.VarChar(20)
+  frequency   String    @db.VarChar(20)
+  dayOfWeek   Int?      @map("day_of_week")
+  dayOfMonth  Int?      @map("day_of_month")
+  timeOfDay   String    @default("09:00") @map("time_of_day") @db.VarChar(5)
+  timezone    String    @default("UTC") @db.VarChar(50)
+  recipients  String[]
+  includeSelf Boolean   @default(true) @map("include_self")
+  filters     Json      @default("{}")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastSentAt  DateTime? @map("last_sent_at")
+  nextRunAt   DateTime? @map("next_run_at")
+  sendCount   Int       @default(0) @map("send_count")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  history ScheduledReportHistory[]
+
+  @@map("scheduled_reports")
+}
+
+model ScheduledReportHistory {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  scheduledReportId    String   @map("scheduled_report_id") @db.Uuid
+  executedAt           DateTime @default(now()) @map("executed_at")
+  status               String   @db.VarChar(20)
+  recipientsCount      Int      @default(0) @map("recipients_count")
+  successfulDeliveries Int      @default(0) @map("successful_deliveries")
+  errorMessage         String?  @map("error_message")
+  fileSizeBytes        Int?     @map("file_size_bytes")
+  generationTimeMs     Int?     @map("generation_time_ms")
+
+  // Relations
+  scheduledReport ScheduledReport @relation(fields: [scheduledReportId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledReportId, executedAt])
+  @@map("scheduled_report_history")
+}
+
+// ============================================================
+// AI MODELS
+// ============================================================
+
+model AiProjectConfig {
+  id                        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId                 String   @unique @map("project_id") @db.Uuid
+  aiEnabled                 Boolean  @default(true) @map("ai_enabled")
+  smartSuggestionsEnabled   Boolean  @default(true) @map("smart_suggestions_enabled")
+  autoAssignmentEnabled     Boolean  @default(false) @map("auto_assignment_enabled")
+  timeEstimationEnabled     Boolean  @default(true) @map("time_estimation_enabled")
+  riskAnalysisEnabled       Boolean  @default(true) @map("risk_analysis_enabled")
+  standupGenerationEnabled  Boolean  @default(true) @map("standup_generation_enabled")
+  duplicateDetectionEnabled Boolean  @default(true) @map("duplicate_detection_enabled")
+  confidenceThreshold       Decimal  @default(0.70) @map("confidence_threshold") @db.Decimal(3, 2)
+  preferredModel            String   @default("claude-sonnet-4-20250514") @map("preferred_model") @db.VarChar(100)
+  featureFlags              Json     @default("{}") @map("feature_flags")
+  customPrompts             Json     @default("{}") @map("custom_prompts")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("ai_project_configs")
+}
+
+model AiRequestLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId      String?  @map("project_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  feature        String   @db.VarChar(100)
+  endpoint       String   @db.VarChar(255)
+  model          String?  @db.VarChar(100)
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  responseTimeMs Int      @map("response_time_ms")
+  success        Boolean  @default(true)
+  errorMessage   String?  @map("error_message")
+  metadata       Json     @default("{}") @map("metadata")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([feature])
+  @@index([createdAt])
+  @@index([success])
+  @@map("ai_request_logs")
+}
+
+model AiFeedback {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId          String?  @map("project_id") @db.Uuid
+  userId             String?  @map("user_id") @db.Uuid
+  issueId            String?  @map("issue_id") @db.Uuid
+  feature            String   @db.VarChar(100)
+  feedbackType       String   @map("feedback_type") @db.VarChar(50)
+  rating             Int?
+  originalSuggestion Json     @default("{}") @map("original_suggestion")
+  finalValue         Json     @default("{}") @map("final_value")
+  userComment        String?  @map("user_comment")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  issue   Issue?   @relation(fields: [issueId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([feature])
+  @@index([feedbackType])
+  @@index([createdAt])
+  @@map("ai_feedback")
+}
+
+model AiUsage {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  projectId      String?  @map("project_id") @db.Uuid
+  operation      String   @db.VarChar(100)
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  responseTimeMs Int      @map("response_time_ms")
+  cacheHit       Boolean  @default(false) @map("cache_hit")
+  model          String?  @db.VarChar(100)
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([operation])
+  @@index([createdAt])
+  @@map("ai_usage")
+}
+
+model AiSuggestion {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId        String    @map("issue_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  suggestionType String    @map("suggestion_type") @db.VarChar(50)
+  suggestedValue Json      @map("suggested_value")
+  confidence     Float
+  status         String    @default("pending") @db.VarChar(20)
+  reason         String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  respondedAt    DateTime? @map("responded_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, suggestionType])
+  @@index([userId])
+  @@index([status])
+  @@map("ai_suggestions")
+}
+
+model UserSkill {
+  id                     String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId                 String    @map("user_id") @db.Uuid
+  skillName              String    @map("skill_name") @db.VarChar(100)
+  proficiencyLevel       Int       @default(1) @map("proficiency_level")
+  issuesCompleted        Int       @default(0) @map("issues_completed")
+  avgCompletionTimeHours Decimal?  @map("avg_completion_time_hours") @db.Decimal(10, 2)
+  successRate            Decimal   @default(1.0) @map("success_rate") @db.Decimal(3, 2)
+  lastUsedAt             DateTime? @map("last_used_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillName])
+  @@index([userId])
+  @@index([skillName])
+  @@map("user_skills")
+}
+
+model TimePrediction {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId         String    @map("issue_id") @db.Uuid
+  predictedByUser String?   @map("predicted_by_user") @db.Uuid
+  predictedHours  Int       @map("predicted_hours")
+  confidenceScore Decimal   @map("confidence_score") @db.Decimal(3, 2)
+  modelVersion    String?   @map("model_version") @db.VarChar(100)
+  factors         Json      @default("{}") @map("factors")
+  actualHours     Int?      @map("actual_hours")
+  accuracyScore   Decimal?  @map("accuracy_score") @db.Decimal(5, 2)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  // Relations
+  issue         Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  predictedUser User? @relation(fields: [predictedByUser], references: [id], onDelete: SetNull)
+
+  @@index([issueId])
+  @@index([createdAt])
+  @@map("time_predictions")
+}
+
+model AiRecommendation {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId          String?   @map("project_id") @db.Uuid
+  sprintId           String?   @map("sprint_id") @db.Uuid
+  issueId            String?   @map("issue_id") @db.Uuid
+  recommendationType String    @map("recommendation_type") @db.VarChar(50)
+  recommendationData Json      @map("recommendation_data")
+  confidenceScore    Decimal?  @map("confidence_score") @db.Decimal(3, 2)
+  status             String    @default("pending") @db.VarChar(20)
+  actedOnBy          String?   @map("acted_on_by") @db.Uuid
+  actedOnAt          DateTime? @map("acted_on_at")
+  expiresAt          DateTime? @map("expires_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint  Sprint?  @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  issue   Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actor   User?    @relation("RecommendationActedBy", fields: [actedOnBy], references: [id])
+
+  @@index([projectId])
+  @@index([sprintId])
+  @@index([issueId])
+  @@index([recommendationType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ai_recommendations")
+}
+
+// ============================================================
+// AUTOMATION MODELS
+// ============================================================
+
+model AutomationRule {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId      String                @map("project_id") @db.Uuid
+  createdBy      String                @map("created_by") @db.Uuid
+  name           String                @db.VarChar(200)
+  description    String?
+  isEnabled      Boolean               @default(true) @map("is_enabled")
+  triggerType    AutomationTriggerType @map("trigger_type")
+  triggerConfig  Json                  @default("{}") @map("trigger_config")
+  conditions     Json                  @default("[]")
+  actions        Json                  @default("[]")
+  executionOrder Int                   @default(0) @map("execution_order")
+  stopOnError    Boolean               @default(false) @map("stop_on_error")
+  executionCount Int                   @default(0) @map("execution_count")
+  successCount   Int                   @default(0) @map("success_count")
+  failureCount   Int                   @default(0) @map("failure_count")
+  lastExecutedAt DateTime?             @map("last_executed_at")
+  lastSuccessAt  DateTime?             @map("last_success_at")
+  lastFailureAt  DateTime?             @map("last_failure_at")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project      Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator      User                      @relation(fields: [createdBy], references: [id])
+  executions   AutomationRuleExecution[]
+  scheduledRun ScheduledRuleRun?
+
+  @@index([projectId])
+  @@index([triggerType])
+  @@index([isEnabled])
+  @@map("automation_rules")
+}
+
+model AutomationRuleExecution {
+  id                 String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ruleId             String                    @map("rule_id") @db.Uuid
+  triggeredByUserId  String?                   @map("triggered_by_user_id") @db.Uuid
+  triggeredByIssueId String?                   @map("triggered_by_issue_id") @db.Uuid
+  status             AutomationExecutionStatus @default(pending)
+  triggerData        Json                      @default("{}") @map("trigger_data")
+  conditionResults   Json                      @default("[]") @map("condition_results")
+  actionResults      Json                      @default("[]") @map("action_results")
+  errorMessage       String?                   @map("error_message")
+  durationMs         Int?                      @map("duration_ms")
+  startedAt          DateTime?                 @map("started_at")
+  completedAt        DateTime?                 @map("completed_at")
+  createdAt          DateTime                  @default(now()) @map("created_at")
+
+  // Relations
+  rule             AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  triggeredByUser  User?          @relation("ExecutionTriggeredByUser", fields: [triggeredByUserId], references: [id], onDelete: SetNull)
+  triggeredByIssue Issue?         @relation("ExecutionTriggeredByIssue", fields: [triggeredByIssueId], references: [id], onDelete: SetNull)
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("automation_rule_executions")
+}
+
+model ScheduledRuleRun {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ruleId         String    @unique @map("rule_id") @db.Uuid
+  cronExpression String    @map("cron_expression") @db.VarChar(100)
+  nextRunAt      DateTime  @map("next_run_at")
+  lastRunAt      DateTime? @map("last_run_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  rule AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([nextRunAt])
+  @@map("scheduled_rule_runs")
+}
+
+// ============================================================
+// WEBHOOK MODELS
+// ============================================================
+
+model Webhook {
+  id                   String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId            String               @map("project_id") @db.Uuid
+  createdBy            String               @map("created_by") @db.Uuid
+  name                 String               @db.VarChar(200)
+  description          String?
+  url                  String
+  method               WebhookMethod        @default(POST)
+  headers              Json                 @default("{}")
+  secret               String?
+  isEnabled            Boolean              @default(true) @map("is_enabled")
+  events               Json                 @default("[]")
+  maxRetries           Int                  @default(3) @map("max_retries")
+  retryDelaySeconds    Int                  @default(60) @map("retry_delay_seconds")
+  exponentialBackoff   Boolean              @default(true) @map("exponential_backoff")
+  payloadFormat        WebhookPayloadFormat @default(json) @map("payload_format")
+  customPayload        String?              @map("custom_payload")
+  totalDeliveries      Int                  @default(0) @map("total_deliveries")
+  successfulDeliveries Int                  @default(0) @map("successful_deliveries")
+  failedDeliveries     Int                  @default(0) @map("failed_deliveries")
+  lastDeliveryAt       DateTime?            @map("last_delivery_at")
+  lastSuccessAt        DateTime?            @map("last_success_at")
+  lastFailureAt        DateTime?            @map("last_failure_at")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator    User              @relation(fields: [createdBy], references: [id])
+  deliveries WebhookDelivery[]
+
+  @@index([projectId])
+  @@index([isEnabled])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id                 String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  webhookId          String                @map("webhook_id") @db.Uuid
+  eventType          String                @map("event_type") @db.VarChar(100)
+  eventId            String?               @map("event_id") @db.Uuid
+  payload            Json
+  headersSent        Json                  @default("{}") @map("headers_sent")
+  requestUrl         String                @map("request_url")
+  requestMethod      String                @map("request_method") @db.VarChar(10)
+  status             WebhookDeliveryStatus @default(pending)
+  responseStatusCode Int?                  @map("response_status_code")
+  responseBody       String?               @map("response_body")
+  responseHeaders    Json?                 @map("response_headers")
+  durationMs         Int?                  @map("duration_ms")
+  errorMessage       String?               @map("error_message")
+  attemptNumber      Int                   @default(1) @map("attempt_number")
+  maxAttempts        Int                   @default(4) @map("max_attempts")
+  nextRetryAt        DateTime?             @map("next_retry_at")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  completedAt        DateTime?             @map("completed_at")
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([status])
+  @@index([eventType])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================
+// WORKFLOW TRANSITION MODELS
+// ============================================================
+
+model WorkflowTransitionCondition {
+  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transitionId   String                  @map("transition_id") @db.Uuid
+  name           String                  @db.VarChar(200)
+  description    String?
+  type           TransitionConditionType
+  config         Json                    @default("{}")
+  isBlocking     Boolean                 @default(true) @map("is_blocking")
+  errorMessage   String?                 @map("error_message") @db.VarChar(500)
+  executionOrder Int                     @default(0) @map("execution_order")
+  isEnabled      Boolean                 @default(true) @map("is_enabled")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  transition StatusTransition @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+
+  @@index([transitionId])
+  @@map("workflow_transition_conditions")
+}
+
+model WorkflowTransitionValidator {
+  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transitionId   String                  @map("transition_id") @db.Uuid
+  name           String                  @db.VarChar(200)
+  description    String?
+  type           TransitionValidatorType
+  field          String
+  config         Json                    @default("{}")
+  errorMessage   String?                 @map("error_message") @db.VarChar(500)
+  executionOrder Int                     @default(0) @map("execution_order")
+  isEnabled      Boolean                 @default(true) @map("is_enabled")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  transition StatusTransition @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+
+  @@index([transitionId])
+  @@map("workflow_transition_validators")
+}
+
+model WorkflowTransitionPostfunction {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transitionId   String                     @map("transition_id") @db.Uuid
+  name           String                     @db.VarChar(200)
+  description    String?
+  type           TransitionPostfunctionType
+  config         Json                       @default("{}")
+  executionOrder Int                        @default(0) @map("execution_order")
+  isEnabled      Boolean                    @default(true) @map("is_enabled")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  transition StatusTransition @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+
+  @@index([transitionId])
+  @@map("workflow_transition_postfunctions")
+}
+
+model WorkflowTransitionApproval {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transitionId      String   @unique @map("transition_id") @db.Uuid
+  requiredApprovals Int      @default(1) @map("required_approvals")
+  approverType      Json     @default("\"any\"") @map("approver_type")
+  approvers         Json     @default("[]")
+  allowSelfApproval Boolean  @default(false) @map("allow_self_approval")
+  expiryHours       Int?     @map("expiry_hours")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  transition StatusTransition @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_transition_approvals")
+}
+
+model IssueTransitionApproval {
+  id                String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId           String                        @map("issue_id") @db.Uuid
+  transitionId      String                        @map("transition_id") @db.Uuid
+  requestedBy       String                        @map("requested_by") @db.Uuid
+  status            IssueTransitionApprovalStatus @default(pending)
+  approvalsReceived Int                           @default(0) @map("approvals_received")
+  approvalsRequired Int                           @map("approvals_required")
+  expiresAt         DateTime?                     @map("expires_at")
+  completedAt       DateTime?                     @map("completed_at")
+  createdAt         DateTime                      @default(now()) @map("created_at")
+  updatedAt         DateTime                      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue      Issue                             @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  transition StatusTransition                  @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+  requester  User                              @relation("TransitionRequestedBy", fields: [requestedBy], references: [id])
+  responses  IssueTransitionApprovalResponse[]
+
+  @@index([issueId, status])
+  @@map("issue_transition_approvals")
+}
+
+model IssueTransitionApprovalResponse {
+  id         String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  approvalId String           @map("approval_id") @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  decision   ApprovalDecision
+  comment    String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  approval IssueTransitionApproval @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  user     User                    @relation(fields: [userId], references: [id])
+
+  @@unique([approvalId, userId])
+  @@map("issue_transition_approval_responses")
+}
+
+// ============================================================
+// SLACK INTEGRATION MODELS
+// ============================================================
+
+model SlackWorkspace {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId        String   @unique @map("project_id") @db.Uuid
+  teamId           String   @unique @map("team_id") @db.VarChar(50)
+  teamName         String   @map("team_name") @db.VarChar(255)
+  accessToken      String   @map("access_token")
+  botUserId        String   @map("bot_user_id") @db.VarChar(50)
+  defaultChannelId String?  @map("default_channel_id") @db.VarChar(50)
+  installedBy      String   @map("installed_by") @db.Uuid
+  installedAt      DateTime @default(now()) @map("installed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project        Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  installer      User                 @relation(fields: [installedBy], references: [id])
+  channelConfigs SlackChannelConfig[]
+  userMappings   SlackUserMapping[]
+
+  @@map("slack_workspaces")
+}
+
+model SlackChannelConfig {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  channelId   String   @map("channel_id") @db.VarChar(50)
+  channelName String   @map("channel_name") @db.VarChar(255)
+  events      Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  workspace SlackWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, channelId])
+  @@index([workspaceId])
+  @@map("slack_channel_configs")
+}
+
+model SlackUserMapping {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  slackUserId   String   @map("slack_user_id") @db.VarChar(50)
+  slackUsername String   @map("slack_username") @db.VarChar(255)
+  workspaceId   String   @map("workspace_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace SlackWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@unique([slackUserId, workspaceId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("slack_user_mappings")
+}
+
+// ============================================================
+// GITHUB INTEGRATION MODELS
+// ============================================================
+
+model GithubConnection {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  githubUserId   Int      @map("github_user_id")
+  githubUsername  String   @map("github_username") @db.VarChar(255)
+  githubEmail    String?  @map("github_email") @db.VarChar(255)
+  avatarUrl      String?  @map("avatar_url") @db.VarChar(500)
+  accessToken    String   @map("access_token") @db.Text
+  tokenScopes    String?  @map("token_scopes") @db.VarChar(500)
+  connectedAt    DateTime @default(now()) @map("connected_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("github_connections")
+}
+
+model GithubRepository {
+  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId             String   @unique @map("project_id") @db.Uuid
+  connectedById         String?  @map("connected_by_id") @db.Uuid
+  owner                 String   @db.VarChar(255)
+  name                  String   @db.VarChar(255)
+  fullName              String   @unique @map("full_name") @db.VarChar(511)
+  defaultBranch         String   @default("main") @map("default_branch") @db.VarChar(255)
+  isPrivate             Boolean  @default(false) @map("is_private")
+  webUrl                String?  @map("web_url") @db.VarChar(500)
+  webhookId             Int?     @map("webhook_id")
+  webhookSecret         String?  @map("webhook_secret") @db.VarChar(100)
+  autoTransitionOnMerge Boolean  @default(false) @map("auto_transition_on_merge")
+  transitionStatusId    String?  @map("transition_status_id") @db.Uuid
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  transitionStatus Status?             @relation(fields: [transitionStatusId], references: [id])
+  commits          GithubCommit[]
+  pullRequests     GithubPullRequest[]
+  branches         GithubBranch[]
+
+  @@index([projectId])
+  @@map("github_repositories")
+}
+
+model GithubCommit {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId         String   @map("issue_id") @db.Uuid
+  repositoryId    String   @map("repository_id") @db.Uuid
+  sha             String   @db.VarChar(40)
+  message         String
+  author          String   @db.VarChar(255)
+  authorEmail     String?  @map("author_email") @db.VarChar(255)
+  authorAvatarUrl String?  @map("author_avatar_url") @db.VarChar(500)
+  url             String   @db.VarChar(500)
+  committedAt     DateTime @map("committed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue      Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  repository GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, sha])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@index([committedAt])
+  @@map("github_commits")
+}
+
+model GithubPullRequest {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId         String    @map("issue_id") @db.Uuid
+  repositoryId    String    @map("repository_id") @db.Uuid
+  prNumber        Int       @map("pr_number")
+  title           String    @db.VarChar(500)
+  state           String    @db.VarChar(20)
+  url             String    @db.VarChar(500)
+  author          String    @db.VarChar(255)
+  authorAvatarUrl String?   @map("author_avatar_url") @db.VarChar(500)
+  merged          Boolean   @default(false)
+  mergedAt        DateTime? @map("merged_at")
+  mergedBy        String?   @map("merged_by") @db.VarChar(255)
+  baseBranch      String    @map("base_branch") @db.VarChar(255)
+  headBranch      String    @map("head_branch") @db.VarChar(255)
+  additions       Int       @default(0)
+  deletions       Int       @default(0)
+  changedFiles    Int       @default(0) @map("changed_files")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue      Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  repository GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, prNumber])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@index([state])
+  @@map("github_pull_requests")
+}
+
+model GithubBranch {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String   @map("issue_id") @db.Uuid
+  repositoryId String   @map("repository_id") @db.Uuid
+  branchName   String   @map("branch_name") @db.VarChar(255)
+  url          String   @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue      Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  repository GithubRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, branchName])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@map("github_branches")
+}
+
+// ============================================================
+// GITLAB INTEGRATION MODELS
+// ============================================================
+
+model GitlabConnection {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  gitlabUserId   Int      @map("gitlab_user_id")
+  gitlabUsername String   @map("gitlab_username") @db.VarChar(255)
+  gitlabEmail    String?  @map("gitlab_email") @db.VarChar(255)
+  accessToken    String   @map("access_token") @db.Text
+  tokenScopes    String?  @map("token_scopes") @db.VarChar(500)
+  connectedAt    DateTime @default(now()) @map("connected_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("gitlab_connections")
+}
+
+model GitlabRepository {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId       String   @unique @map("project_id") @db.Uuid
+  gitlabProjectId Int      @map("gitlab_project_id")
+  connectedById   String?  @map("connected_by_id") @db.Uuid
+  name            String   @db.VarChar(255)
+  fullPath        String   @map("full_path") @db.VarChar(500)
+  defaultBranch   String   @default("main") @map("default_branch") @db.VarChar(255)
+  webUrl          String?  @map("web_url") @db.VarChar(500)
+  webhookId       Int?     @map("webhook_id")
+  webhookSecret   String?  @map("webhook_secret") @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  commits       GitlabCommit[]
+  branches      GitlabBranch[]
+  mergeRequests GitlabMergeRequest[]
+
+  @@index([projectId])
+  @@index([gitlabProjectId])
+  @@map("gitlab_repositories")
+}
+
+model GitlabCommit {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String    @map("issue_id") @db.Uuid
+  repositoryId String    @map("repository_id") @db.Uuid
+  sha          String    @db.VarChar(40)
+  message      String    @db.Text
+  authorName   String?   @map("author_name") @db.VarChar(255)
+  authorEmail  String?   @map("author_email") @db.VarChar(255)
+  committedAt  DateTime  @map("committed_at")
+  webUrl       String?   @map("web_url") @db.VarChar(500)
+  branch       String?   @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  issue      Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  repository GitlabRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, sha])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@index([committedAt])
+  @@map("gitlab_commits")
+}
+
+model GitlabBranch {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String?  @map("issue_id") @db.Uuid
+  repositoryId String   @map("repository_id") @db.Uuid
+  name         String   @db.VarChar(255)
+  webUrl       String?  @map("web_url") @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  issue      Issue?           @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  repository GitlabRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, name])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@map("gitlab_branches")
+}
+
+model GitlabMergeRequest {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String    @map("issue_id") @db.Uuid
+  repositoryId String    @map("repository_id") @db.Uuid
+  mrIid        Int       @map("mr_iid")
+  title        String    @db.VarChar(500)
+  state        String    @db.VarChar(50)
+  sourceBranch String?   @map("source_branch") @db.VarChar(255)
+  targetBranch String?   @map("target_branch") @db.VarChar(255)
+  authorName   String?   @map("author_name") @db.VarChar(255)
+  webUrl       String?   @map("web_url") @db.VarChar(500)
+  mergedAt     DateTime? @map("merged_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue      Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  repository GitlabRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, mrIid])
+  @@index([issueId])
+  @@index([repositoryId])
+  @@index([state])
+  @@map("gitlab_merge_requests")
+}
+
+// ============================================================
+// CALENDAR INTEGRATION MODELS
+// ============================================================
+
+model CalendarIntegration {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  provider       String   @db.VarChar(20)
+  calendarId     String   @map("calendar_id") @db.VarChar(255)
+  calendarName   String   @map("calendar_name") @db.VarChar(255)
+  accessToken    String   @map("access_token")
+  refreshToken   String   @map("refresh_token")
+  tokenExpiresAt DateTime @map("token_expires_at")
+  syncDueDates   Boolean  @default(true) @map("sync_due_dates")
+  syncSprints    Boolean  @default(true) @map("sync_sprints")
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@map("calendar_integrations")
+}
+
+model CalendarEventMapping {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  issueId         String?  @map("issue_id") @db.Uuid
+  sprintId        String?  @map("sprint_id") @db.Uuid
+  externalEventId String   @map("external_event_id") @db.VarChar(255)
+  provider        String   @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue  Issue?  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  sprint Sprint? @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, externalEventId, provider])
+  @@index([userId])
+  @@index([issueId])
+  @@index([sprintId])
+  @@map("calendar_event_mappings")
+}
+
+// ============================================================
+// DUE DATE REMINDERS
+// ============================================================
+
+model DueDateReminder {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String   @map("issue_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  reminderType String   @map("reminder_type") @db.VarChar(50)
+  sentAt       DateTime @default(now()) @map("sent_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, reminderType, sentAt])
+  @@index([userId, sentAt])
+  @@map("due_date_reminders")
+}
+
+// ============================================================
+// HRMS MODELS
+// ============================================================
+
+model Employee {
+  id           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String?        @unique @map("user_id") @db.Uuid
+  employeeId   String         @unique @map("employee_id") @db.VarChar(20)
+  firstName    String         @map("first_name") @db.VarChar(100)
+  lastName     String?        @map("last_name") @db.VarChar(100)
+  email        String         @unique @db.VarChar(255)
+  phone        String?        @db.VarChar(20)
+  dateOfBirth  DateTime?      @map("date_of_birth") @db.Date
+  gender       Gender?
+  joiningDate  DateTime       @map("joining_date") @db.Date
+  exitDate     DateTime?      @map("exit_date") @db.Date
+  designation  String         @db.VarChar(100)
+  department   String         @db.VarChar(100)
+  workLocation String?        @map("work_location") @db.VarChar(200)
+  workMode     String?        @map("work_mode") @db.VarChar(50)
+  country      String?        @db.VarChar(100)
+  biometricDeviceId String?   @map("biometric_device_id") @db.VarChar(100)
+  managerId         String?        @map("manager_id") @db.Uuid
+  status       EmployeeStatus @default(onboarding)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  createdBy    String?        @map("created_by") @db.Uuid
+  updatedBy    String?        @map("updated_by") @db.Uuid
+  deletedAt    DateTime?      @map("deleted_at")
+  deletedBy    String?        @map("deleted_by") @db.Uuid
+  branchId     String?        @map("branch_id") @db.VarChar(50)
+
+  // Relations
+  user               User?            @relation("EmployeeUser", fields: [userId], references: [id], onDelete: Restrict)
+  manager            Employee?        @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: Restrict)
+  directReports      Employee[]       @relation("EmployeeManager")
+  createdByUser      User?            @relation("EmployeeCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  updatedByUser      User?            @relation("EmployeeUpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
+  deletedByUser      User?            @relation("EmployeeDeletedBy", fields: [deletedBy], references: [id], onDelete: Restrict)
+  profile            EmployeeProfile?
+  attendanceRecords  Attendance[]
+  attendanceLogs     AttendanceLog[]
+  leaves             Leave[]
+  leaveBalances      LeaveBalance[]
+  payrollRecords     Payroll[]
+  onboarding         Onboarding?
+  offboarding        Offboarding?
+  onboardingInvite   OnboardingInvite?
+  onboardingOtps     OnboardingOtp[]
+  documents          EmployeeDocument[]
+  requestedApprovals Approval[]       @relation("ApprovalRequester")
+
+  @@index([managerId])
+  @@index([status])
+  @@index([department])
+  @@index([userId])
+  @@index([branchId])
+  @@map("employees")
+}
+
+model EmployeeProfile {
+  id                       String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId               String                 @unique @map("employee_id") @db.Uuid
+  personalEmail            String?                @map("personal_email") @db.VarChar(255)
+  bloodGroup               String?                @map("blood_group") @db.VarChar(10)
+  maritalStatus            EmployeeMaritalStatus? @map("marital_status")
+  currentAddress           String?                @map("current_address")
+  permanentAddress         String?                @map("permanent_address")
+  emergencyContactName     String?                @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone    String?                @map("emergency_contact_phone") @db.VarChar(20)
+  emergencyContactRelation String?                @map("emergency_contact_relation") @db.VarChar(100)
+  bankName                 String?                @map("bank_name") @db.VarChar(200)
+  bankAccountNumber        String?                @map("bank_account_number") @db.VarChar(50)
+  bankIfscCode             String?                @map("bank_ifsc_code") @db.VarChar(20)
+  bankBranchName           String?                @map("bank_branch_name") @db.VarChar(200)
+  bankAccountHolderName    String?                @map("bank_account_holder_name") @db.VarChar(200)
+  createdAt                DateTime               @default(now()) @map("created_at")
+  updatedAt                DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_profiles")
+}
+
+model EmployeeDocument {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId   String   @map("employee_id") @db.Uuid
+  documentType String   @map("document_type") @db.VarChar(100)
+  documentName String   @map("document_name") @db.VarChar(255)
+  fileUrl      String   @map("file_url")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  status       String    @default("pending") @db.VarChar(50)
+  reviewNote   String?   @map("review_note")
+  reviewedBy   String?   @map("reviewed_by") @db.Uuid
+  reviewedAt   DateTime? @map("reviewed_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([documentType])
+  @@map("employee_documents")
+}
+
+model Attendance {
+  id               String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId       String           @map("employee_id") @db.Uuid
+  date             DateTime         @db.Date
+  checkInTime      DateTime?        @map("check_in_time")
+  checkOutTime     DateTime?        @map("check_out_time")
+  status           AttendanceStatus
+  leaveId          String?          @map("leave_id") @db.Uuid
+  workHours        Decimal?         @map("work_hours") @db.Decimal(5, 2)
+  manualCorrection Boolean          @default(false) @map("manual_correction")
+  correctionReason String?          @map("correction_reason")
+  correctedBy      String?          @map("corrected_by") @db.Uuid
+  correctedAt      DateTime?        @map("corrected_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at")
+  createdBy        String?          @map("created_by") @db.Uuid
+
+  // Relations
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  leave           Leave?           @relation(fields: [leaveId], references: [id], onDelete: SetNull)
+  correctedByUser User?            @relation("AttendanceCorrectedBy", fields: [correctedBy], references: [id], onDelete: Restrict)
+  createdByUser   User?            @relation("AttendanceCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  logs            AttendanceLog[]
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+  @@index([status])
+  @@index([correctedBy])
+  @@map("attendance")
+}
+
+model AttendanceLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  attendanceId   String   @map("attendance_id") @db.Uuid
+  employeeId     String   @map("employee_id") @db.Uuid
+  date           DateTime @db.Date
+  type           String   // 'clock_in' | 'clock_out'
+  loggedAt       DateTime @default(now()) @map("logged_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  latitude       Float?
+  longitude      Float?
+  accuracy       Float?
+  source         String?  @default("manual") @db.VarChar(50)    // 'manual' | 'biometric' | 'biometric_cron' | 'simulate'
+  deviceUserId   String?  @map("device_user_id") @db.VarChar(100)
+
+  // Relations
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+
+  @@index([attendanceId])
+  @@index([employeeId, date])
+  @@map("attendance_logs")
+}
+
+model Holiday {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  date        DateTime    @unique @db.Date
+  name        String      @db.VarChar(200)
+  type        HolidayType
+  location    String?     @db.VarChar(200)
+  description String?
+  branchId    String?     @map("branch_id") @db.VarChar(50)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at")
+  createdBy   String?     @map("created_by") @db.Uuid
+  updatedBy   String?     @map("updated_by") @db.Uuid
+
+  // Relations
+  createdByUser User? @relation("HolidayCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  updatedByUser User? @relation("HolidayUpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
+
+  @@index([date])
+  @@index([type])
+  @@index([location])
+  @@index([branchId])
+  @@map("holidays")
+}
+
+model Leave {
+  id                       String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId               String       @map("employee_id") @db.Uuid
+  leaveType                String       @map("leave_type") @db.VarChar(100)
+  fromDate                 DateTime     @map("from_date") @db.Date
+  toDate                   DateTime     @map("to_date") @db.Date
+  session                  LeaveSession @default(full_day)
+  days                     Decimal      @db.Decimal(5, 2)
+  reason                   String?
+  status                   LeaveStatus @default(pending)
+  appliedAt                DateTime    @default(now()) @map("applied_at")
+  approvedBy               String?     @map("approved_by") @db.Uuid
+  approvedAt               DateTime?   @map("approved_at")
+  rejectedBy               String?     @map("rejected_by") @db.Uuid
+  rejectedAt               DateTime?   @map("rejected_at")
+  rejectionReason          String?     @map("rejection_reason")
+  cancelledAt              DateTime?   @map("cancelled_at")
+  balanceBeforeApplication Decimal?    @map("balance_before_application") @db.Decimal(5, 2)
+  balanceAfterApproval     Decimal?    @map("balance_after_approval") @db.Decimal(5, 2)
+  lopDays                  Decimal     @default(0) @map("lop_days") @db.Decimal(5, 2)
+  isAutoLop                Boolean     @default(false) @map("is_auto_lop")
+  createdAt                DateTime    @default(now()) @map("created_at")
+  updatedAt                DateTime    @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee          Employee     @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  approvedByUser    User?        @relation("LeaveApprovedBy", fields: [approvedBy], references: [id], onDelete: Restrict)
+  rejectedByUser    User?        @relation("LeaveRejectedBy", fields: [rejectedBy], references: [id], onDelete: Restrict)
+  attendanceRecords Attendance[]
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([fromDate])
+  @@index([approvedBy])
+  @@index([employeeId, status])
+  @@map("leaves")
+}
+
+model LeaveBalance {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId           String   @map("employee_id") @db.Uuid
+  year                 Int
+  casual               Decimal  @default(0) @db.Decimal(5, 2)
+  sick                 Decimal  @default(0) @db.Decimal(5, 2)
+  earned               Decimal  @default(0) @db.Decimal(5, 2)
+  lop                  Decimal  @default(0) @db.Decimal(5, 2)
+  carriedForwardEarned Decimal  @default(0) @map("carried_forward_earned") @db.Decimal(5, 2)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, year])
+  @@index([employeeId])
+  @@index([year])
+  @@index([employeeId, year])
+  @@map("leave_balances")
+}
+
+model LeaveTypeConfig {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  leaveType        String    @unique @map("leave_type") @db.VarChar(100)
+  label            String    @db.VarChar(100)
+  annualAllocation Decimal   @default(0) @map("annual_allocation") @db.Decimal(5, 2)
+  requiresApproval Boolean   @default(true) @map("requires_approval")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("leave_types")
+}
+
+model Payroll {
+  id          String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId  String        @map("employee_id") @db.Uuid
+  month       Int
+  year        Int
+  gross       Decimal       @db.Decimal(12, 2)
+  deductions  Decimal       @db.Decimal(12, 2)
+  net         Decimal       @db.Decimal(12, 2)
+  payslipUrl  String?       @map("payslip_url") @db.VarChar(500)
+  status      PayrollStatus @default(draft)
+  uploadedAt  DateTime?     @map("uploaded_at")
+  uploadedBy  String?       @map("uploaded_by") @db.Uuid
+  generatedAt DateTime?     @map("generated_at")
+  finalizedAt DateTime?     @map("finalized_at")
+  finalizedBy String?       @map("finalized_by") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  uploadedByUser  User?    @relation("PayrollUploadedBy", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  finalizedByUser User?    @relation("PayrollFinalizedBy", fields: [finalizedBy], references: [id], onDelete: Restrict)
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
+  @@index([month, year])
+  @@index([status])
+  @@map("payroll")
+}
+
+model PayrollLock {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  month     Int
+  year      Int
+  lockedAt  DateTime @default(now()) @map("locked_at")
+  lockedBy  String   @map("locked_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lockedByUser User @relation("PayrollLockedBy", fields: [lockedBy], references: [id], onDelete: Restrict)
+
+  @@unique([month, year])
+  @@index([month, year])
+  @@index([lockedBy])
+  @@map("payroll_locks")
+}
+
+model Onboarding {
+  id                   String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId           String           @unique @map("employee_id") @db.Uuid
+  status               OnboardingStatus @default(in_progress)
+  startedAt            DateTime         @default(now()) @map("started_at")
+  targetCompletionDate DateTime?        @map("target_completion_date") @db.Date
+  completedAt          DateTime?        @map("completed_at")
+  completedBy          String?          @map("completed_by") @db.Uuid
+  progress             String?          @db.VarChar(10)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  completedByUser User?            @relation("OnboardingCompletedBy", fields: [completedBy], references: [id], onDelete: Restrict)
+  tasks           OnboardingTask[]
+
+  @@index([employeeId])
+  @@index([status])
+  @@map("onboarding")
+}
+
+model OnboardingTask {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  onboardingId    String    @map("onboarding_id") @db.Uuid
+  taskName        String    @map("task_name") @db.VarChar(200)
+  taskDescription String?   @map("task_description")
+  phase           String?   @db.VarChar(50)
+  assignee        String?   @db.VarChar(100)
+  taskOrder       Int       @map("task_order")
+  completed       Boolean   @default(false)
+  completedAt     DateTime? @map("completed_at")
+  completedBy     String?   @map("completed_by") @db.Uuid
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  onboarding      Onboarding @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+  completedByUser User?      @relation("OnboardingTaskCompletedBy", fields: [completedBy], references: [id], onDelete: Restrict)
+
+  @@index([onboardingId])
+  @@index([taskOrder])
+  @@map("onboarding_tasks")
+}
+
+model Offboarding {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId      String            @unique @map("employee_id") @db.Uuid
+  lastWorkingDay  DateTime          @map("last_working_day") @db.Date
+  exitReason      OffboardingReason @map("exit_reason")
+  additionalNotes String?           @map("additional_notes")
+  status          OffboardingStatus @default(in_progress)
+  initiatedAt     DateTime          @default(now()) @map("initiated_at")
+  initiatedBy     String?           @map("initiated_by") @db.Uuid
+  completedAt     DateTime?         @map("completed_at")
+  completedBy     String?           @map("completed_by") @db.Uuid
+  accessRevokedAt DateTime?         @map("access_revoked_at")
+  progress        String?           @db.VarChar(10)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  employee        Employee          @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  initiatedByUser User?             @relation("OffboardingInitiatedBy", fields: [initiatedBy], references: [id], onDelete: Restrict)
+  completedByUser User?             @relation("OffboardingCompletedBy", fields: [completedBy], references: [id], onDelete: Restrict)
+  tasks           OffboardingTask[]
+
+  @@index([employeeId])
+  @@index([lastWorkingDay])
+  @@index([status])
+  @@map("offboarding")
+}
+
+model OffboardingTask {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  offboardingId   String    @map("offboarding_id") @db.Uuid
+  taskName        String    @map("task_name") @db.VarChar(200)
+  taskDescription String?   @map("task_description")
+  phase           String?   @db.VarChar(50)
+  assignee        String?   @db.VarChar(100)
+  taskOrder       Int       @map("task_order")
+  completed       Boolean   @default(false)
+  completedAt     DateTime? @map("completed_at")
+  completedBy     String?   @map("completed_by") @db.Uuid
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  offboarding     Offboarding @relation(fields: [offboardingId], references: [id], onDelete: Cascade)
+  completedByUser User?       @relation("OffboardingTaskCompletedBy", fields: [completedBy], references: [id], onDelete: Restrict)
+
+  @@index([offboardingId])
+  @@index([taskOrder])
+  @@map("offboarding_tasks")
+}
+
+model OnboardingInvite {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId String    @unique @map("employee_id") @db.Uuid
+  token      String    @unique @db.VarChar(128)
+  expiresAt  DateTime  @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdBy  String    @map("created_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("onboarding_invites")
+}
+
+model OnboardingOtp {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  employeeId String    @map("employee_id") @db.Uuid
+  otpHash    String    @map("otp_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at")
+  verifiedAt DateTime? @map("verified_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("onboarding_otps")
+}
+
+model OnboardingTaskTemplate {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  taskName         String   @map("task_name") @db.VarChar(200)
+  description      String?
+  phase            String   @db.VarChar(50)
+  assignee         String?  @db.VarChar(100)
+  taskOrder        Int      @map("task_order")
+  isActive         Boolean  @default(true) @map("is_active")
+  requiresDocument Boolean  @default(false) @map("requires_document")
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([phase])
+  @@index([isActive])
+  @@map("onboarding_task_templates")
+}
+
+model OffboardingTaskTemplate {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  taskName    String   @map("task_name") @db.VarChar(200)
+  description String?
+  phase       String   @db.VarChar(50)
+  assignee    String?  @db.VarChar(100)
+  taskOrder   Int      @map("task_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([phase])
+  @@index([isActive])
+  @@map("offboarding_task_templates")
+}
+
+model Approval {
+  id                 String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  resourceType       ApprovalResourceType @map("resource_type")
+  resourceId         String               @map("resource_id") @db.Uuid
+  requesterId        String               @map("requester_id") @db.Uuid
+  approverId         String               @map("approver_id") @db.Uuid
+  currentApproverId  String               @map("current_approver_id") @db.Uuid
+  approverType       ApprovalApproverType @map("approver_type")
+  status             ApprovalStatus       @default(pending)
+  priority           ApprovalPriority     @default(normal)
+  escalated          Boolean              @default(false)
+  escalationDeadline DateTime?            @map("escalation_deadline")
+  escalatedAt        DateTime?            @map("escalated_at")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  respondedAt        DateTime?            @map("responded_at")
+  response           ApprovalResponse?
+  responseNote       String?              @map("response_note")
+  rejectionReason    String?              @map("rejection_reason")
+  updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  requester       Employee          @relation("ApprovalRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  approver        User              @relation("ApprovalApprover", fields: [approverId], references: [id], onDelete: Restrict)
+  currentApprover User              @relation("ApprovalCurrentApprover", fields: [currentApproverId], references: [id], onDelete: Restrict)
+  history         ApprovalHistory[]
+
+  @@index([approverId])
+  @@index([status])
+  @@index([resourceType, resourceId])
+  @@index([escalationDeadline])
+  @@map("approvals")
+}
+
+model ApprovalHistory {
+  id         String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  approvalId String         @map("approval_id") @db.Uuid
+  status     ApprovalStatus
+  actedBy    String?        @map("acted_by") @db.Uuid
+  note       String?
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  approval    Approval @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  actedByUser User?    @relation("ApprovalHistoryActedBy", fields: [actedBy], references: [id], onDelete: SetNull)
+
+  @@index([approvalId])
+  @@index([actedBy])
+  @@index([createdAt])
+  @@map("approval_history")
+}
+
+model SystemSetting {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  settingKey   String   @unique @map("setting_key") @db.VarChar(100)
+  settingValue Json     @map("setting_value")
+  description  String?
+  updatedBy    String?  @map("updated_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  updatedByUser User? @relation("SystemSettingUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([settingKey])
+  @@index([updatedBy])
+  @@map("system_settings")
+}
+
+model Page {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String    @map("project_id") @db.Uuid
+  title       String    @db.VarChar(500)
+  slug        String    @db.VarChar(500)
+  content     String?
+  contentHtml String?   @map("content_html")
+  parentId    String?   @map("parent_id") @db.Uuid
+  position    Int       @default(0)
+  createdBy   String    @map("created_by") @db.Uuid
+  isPublished Boolean   @default(true) @map("is_published")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   Page?   @relation("PageParent", fields: [parentId], references: [id])
+  children Page[]  @relation("PageParent")
+  creator  User    @relation("PageCreatedBy", fields: [createdBy], references: [id])
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@index([parentId])
+  @@map("pages")
+}
+
+model Lead {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  leadKey      String        @unique @map("lead_key") @db.VarChar(50)
+  name         String        @db.VarChar(255)
+  company      String?       @db.VarChar(255)
+  source       String?       @db.VarChar(100)
+  status       String        @default("new") @db.VarChar(50)
+  remarks      String?
+  followUpDate DateTime?     @map("follow_up_date")
+  createdBy    String        @map("created_by") @db.Uuid
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  comments     LeadComment[]
+
+  @@map("leads")
+}
+
+model LeadComment {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  leadId    String   @map("lead_id") @db.Uuid
+  content   String
+  authorName String  @map("author_name") @db.VarChar(255)
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_comments")
+}
+
+// ============================================================
+// EMAIL SCHEDULE CONFIG
+// ============================================================
+
+model EmailScheduleConfig {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  scheduleType String   @unique @map("schedule_type") @db.VarChar(50)
+  enabled      Boolean  @default(true)
+  recipients   String[] @default([])
+  lastSentAt   DateTime? @map("last_sent_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("email_schedule_configs")
+}
+
+// ============================================================
+// GAP CLOSURE - FORMS / BULK OPS / SCHEMES / GROUPS
+// ============================================================
+
+enum FormStatus {
+  draft
+  published
+  archived
+
+  @@map("form_status")
+}
+
+enum FormFieldType {
+  text
+  textarea
+  number
+  email
+  select
+  multiselect
+  checkbox
+  radio
+  date
+  datetime
+
+  @@map("form_field_type")
+}
+
+enum BulkOperationType {
+  update
+  delete
+  move
+  transition
+
+  @@map("bulk_operation_type")
+}
+
+enum BulkOperationStatus {
+  pending
+  running
+  completed
+  failed
+  partial
+  cancelled
+
+  @@map("bulk_operation_status")
+}
+
+enum BulkOperationItemStatus {
+  pending
+  running
+  completed
+  failed
+  skipped
+
+  @@map("bulk_operation_item_status")
+}
+
+enum WorkflowSchemeStatus {
+  active
+  inactive
+
+  @@map("workflow_scheme_status")
+}
+
+enum PermissionSchemeStatus {
+  active
+  inactive
+
+  @@map("permission_scheme_status")
+}
+
+enum SchemePrincipalType {
+  user
+  user_role
+  project_role
+  group
+
+  @@map("scheme_principal_type")
+}
+
+enum PermissionEffect {
+  allow
+  deny
+
+  @@map("permission_effect")
+}
+
+enum NotificationSchemeStatus {
+  active
+  inactive
+
+  @@map("notification_scheme_status")
+}
+
+enum NotificationRuleEvent {
+  issue_created
+  issue_updated
+  issue_assigned
+  issue_status_changed
+  issue_commented
+  issue_deleted
+  project_member_added
+
+  @@map("notification_rule_event")
+}
+
+enum NotificationRecipientType {
+  assignee
+  reporter
+  watchers
+  specific_user
+  user_role
+  project_role
+  group
+
+  @@map("notification_recipient_type")
+}
+
+model Form {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId     String     @map("project_id") @db.Uuid
+  name          String     @db.VarChar(200)
+  description   String?
+  status        FormStatus @default(draft)
+  isPublic      Boolean    @default(false) @map("is_public")
+  issueTemplate Json?      @map("issue_template")
+  settings      Json?      @default("{}")
+  createdBy     String     @map("created_by") @db.Uuid
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
+
+  fields       FormField[]
+  submissions  FormSubmission[]
+  accessTokens FormAccessToken[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([createdBy])
+  @@map("forms")
+}
+
+model FormField {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  formId       String        @map("form_id") @db.Uuid
+  fieldKey     String        @map("field_key") @db.VarChar(100)
+  label        String        @db.VarChar(200)
+  fieldType    FormFieldType @map("field_type")
+  isRequired   Boolean       @default(false) @map("is_required")
+  position     Int           @default(0)
+  placeholder  String?       @db.VarChar(255)
+  helperText   String?       @map("helper_text") @db.VarChar(500)
+  options      Json?
+  validation   Json?
+  defaultValue Json?         @map("default_value")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  form   Form                       @relation(fields: [formId], references: [id], onDelete: Cascade)
+  values FormSubmissionFieldValue[]
+
+  @@unique([formId, fieldKey])
+  @@index([formId, position])
+  @@map("form_fields")
+}
+
+model FormSubmission {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  formId         String    @map("form_id") @db.Uuid
+  submittedBy    String?   @map("submitted_by") @db.Uuid
+  payload        Json
+  metadata       Json?     @default("{}")
+  createdIssueId String?   @map("created_issue_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  form   Form                       @relation(fields: [formId], references: [id], onDelete: Cascade)
+  values FormSubmissionFieldValue[]
+
+  @@index([formId])
+  @@index([submittedBy])
+  @@index([createdIssueId])
+  @@map("form_submissions")
+}
+
+model FormSubmissionFieldValue {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submissionId String   @map("submission_id") @db.Uuid
+  fieldId      String   @map("field_id") @db.Uuid
+  value        Json
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  submission FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  field      FormField      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, fieldId])
+  @@index([submissionId])
+  @@index([fieldId])
+  @@map("form_submission_field_values")
+}
+
+model FormAccessToken {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  formId      String    @map("form_id") @db.Uuid
+  token       String    @unique @db.VarChar(128)
+  createdBy   String?   @map("created_by") @db.Uuid
+  expiresAt   DateTime? @map("expires_at")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastUsedAt  DateTime? @map("last_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId, isActive])
+  @@map("form_access_tokens")
+}
+
+model BulkOperation {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId      String              @map("project_id") @db.Uuid
+  requestedBy    String              @map("requested_by") @db.Uuid
+  operationType  BulkOperationType   @map("operation_type")
+  status         BulkOperationStatus @default(pending)
+  totalCount     Int                 @default(0) @map("total_count")
+  processedCount Int                 @default(0) @map("processed_count")
+  successCount   Int                 @default(0) @map("success_count")
+  failedCount    Int                 @default(0) @map("failed_count")
+  payload        Json?               @default("{}")
+  errorMessage   String?             @map("error_message")
+  startedAt      DateTime?           @map("started_at")
+  completedAt    DateTime?           @map("completed_at")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at")
+
+  items BulkOperationItem[]
+
+  @@index([projectId])
+  @@index([requestedBy])
+  @@index([status, createdAt])
+  @@map("bulk_operations")
+}
+
+model BulkOperationItem {
+  id          String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  operationId String                  @map("operation_id") @db.Uuid
+  issueId      String                  @map("issue_id") @db.Uuid
+  status       BulkOperationItemStatus @default(pending)
+  errorMessage String?                 @map("error_message")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @default(now()) @updatedAt @map("updated_at")
+
+  operation BulkOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+
+  @@unique([operationId, issueId])
+  @@index([operationId, status])
+  @@map("bulk_operation_items")
+}
+
+model WorkflowScheme {
+  id          String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String?              @map("project_id") @db.Uuid
+  name        String               @db.VarChar(200)
+  description String?
+  status      WorkflowSchemeStatus @default(active)
+  isDefault   Boolean              @default(false) @map("is_default")
+  createdBy   String?              @map("created_by") @db.Uuid
+  updatedBy   String?              @map("updated_by") @db.Uuid
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @default(now()) @updatedAt @map("updated_at")
+
+  mappings    WorkflowSchemeMapping[]
+  assignments ProjectWorkflowScheme[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("workflow_schemes")
+}
+
+model WorkflowSchemeMapping {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowSchemeId String   @map("workflow_scheme_id") @db.Uuid
+  issueTypeId      String?  @map("issue_type_id") @db.Uuid
+  workflowId       String   @map("workflow_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  workflowScheme WorkflowScheme @relation(fields: [workflowSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowSchemeId, issueTypeId])
+  @@index([workflowSchemeId])
+  @@index([workflowId])
+  @@map("workflow_scheme_mappings")
+}
+
+model ProjectWorkflowScheme {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId        String   @map("project_id") @db.Uuid
+  workflowSchemeId String   @map("workflow_scheme_id") @db.Uuid
+  assignedBy       String?  @map("assigned_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  workflowScheme WorkflowScheme @relation(fields: [workflowSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId])
+  @@index([workflowSchemeId])
+  @@map("project_workflow_schemes")
+}
+
+model PermissionScheme {
+  id          String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String?                @map("project_id") @db.Uuid
+  name        String                 @db.VarChar(200)
+  description String?
+  status      PermissionSchemeStatus @default(active)
+  isDefault   Boolean                @default(false) @map("is_default")
+  createdBy   String?                @map("created_by") @db.Uuid
+  updatedBy   String?                @map("updated_by") @db.Uuid
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  rules       PermissionSchemeRule[]
+  assignments ProjectPermissionScheme[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("permission_schemes")
+}
+
+model PermissionSchemeRule {
+  id                 String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  permissionSchemeId String            @map("permission_scheme_id") @db.Uuid
+  permissionName     String            @map("permission_name") @db.VarChar(100)
+  principalType      SchemePrincipalType @map("principal_type")
+  principalId        String            @map("principal_id") @db.VarChar(100)
+  effect             PermissionEffect  @default(allow)
+  conditions         Json?             @default("{}")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  permissionScheme PermissionScheme @relation(fields: [permissionSchemeId], references: [id], onDelete: Cascade)
+
+  @@index([permissionSchemeId])
+  @@index([permissionName])
+  @@index([principalType, principalId])
+  @@map("permission_scheme_rules")
+}
+
+model ProjectPermissionScheme {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId          String   @map("project_id") @db.Uuid
+  permissionSchemeId String   @map("permission_scheme_id") @db.Uuid
+  assignedBy         String?  @map("assigned_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  permissionScheme PermissionScheme @relation(fields: [permissionSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId])
+  @@index([permissionSchemeId])
+  @@map("project_permission_schemes")
+}
+
+model NotificationScheme {
+  id          String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String?                  @map("project_id") @db.Uuid
+  name        String                   @db.VarChar(200)
+  description String?
+  status      NotificationSchemeStatus @default(active)
+  isDefault   Boolean                  @default(false) @map("is_default")
+  createdBy   String?                  @map("created_by") @db.Uuid
+  updatedBy   String?                  @map("updated_by") @db.Uuid
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @default(now()) @updatedAt @map("updated_at")
+
+  rules       NotificationSchemeRule[]
+  assignments ProjectNotificationScheme[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("notification_schemes")
+}
+
+model NotificationSchemeRule {
+  id                   String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  notificationSchemeId String                  @map("notification_scheme_id") @db.Uuid
+  eventType            NotificationRuleEvent   @map("event_type")
+  recipientType        NotificationRecipientType @map("recipient_type")
+  recipientId          String?                 @map("recipient_id") @db.VarChar(100)
+  isEnabled            Boolean                 @default(true) @map("is_enabled")
+  conditions           Json?                   @default("{}")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @default(now()) @updatedAt @map("updated_at")
+
+  notificationScheme NotificationScheme @relation(fields: [notificationSchemeId], references: [id], onDelete: Cascade)
+
+  @@index([notificationSchemeId])
+  @@index([eventType, isEnabled])
+  @@map("notification_scheme_rules")
+}
+
+model ProjectNotificationScheme {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId            String   @map("project_id") @db.Uuid
+  notificationSchemeId String   @map("notification_scheme_id") @db.Uuid
+  assignedBy           String?  @map("assigned_by") @db.Uuid
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+
+  notificationScheme NotificationScheme @relation(fields: [notificationSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId])
+  @@index([notificationSchemeId])
+  @@map("project_notification_schemes")
+}
+
+model UserGroup {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId   String?  @map("project_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?
+  createdBy   String?  @map("created_by") @db.Uuid
+  updatedBy   String?  @map("updated_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  members             UserGroupMember[]
+  roleBindings        GroupRoleBinding[]
+  projectRoleBindings ProjectGroupRoleBinding[]
+
+  @@index([projectId])
+  @@unique([projectId, name])
+  @@map("user_groups")
+}
+
+model UserGroupMember {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  groupId   String   @map("group_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  addedBy   String?  @map("added_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  group UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+  @@map("user_group_members")
+}
+
+model GroupRoleBinding {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  groupId   String   @map("group_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  roleScope String   @default("pmt") @map("role_scope") @db.VarChar(20)
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  group UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, roleId, roleScope])
+  @@index([groupId])
+  @@index([roleId])
+  @@map("group_role_bindings")
+}
+
+model ProjectGroupRoleBinding {
+  id          String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  groupId     String            @map("group_id") @db.Uuid
+  projectId   String            @map("project_id") @db.Uuid
+  projectRole ProjectMemberRole @map("project_role")
+  createdBy   String?           @map("created_by") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  group UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, projectId])
+  @@index([projectId, projectRole])
+  @@map("project_group_role_bindings")
+}
+
+
+// ============================================================
+// SAML SSO
+// ============================================================
+
+model SamlConfig {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// Human-readable label e.g. "Okta", "Azure AD"
+  label                String    @db.VarChar(200)
+  /// IdP SSO / entry-point URL
+  entryPoint           String    @map("entry_point") @db.VarChar(1000)
+  /// SP entity ID / issuer
+  issuer               String    @db.VarChar(500)
+  /// PEM-encoded X.509 certificate from IdP (for signature verification)
+  idpCert              String    @map("idp_cert")
+  /// ACS callback URL registered with the IdP
+  callbackUrl          String    @map("callback_url") @db.VarChar(1000)
+  /// JSON map of SAML attribute -> user field: { email, firstName, lastName, avatarUrl }
+  attributeMapping     Json      @default("{}") @map("attribute_mapping")
+  /// Email domain to enforce SSO on (e.g. "acme.com")
+  enforceDomain        String?   @map("enforce_domain") @db.VarChar(255)
+  isEnabled            Boolean   @default(false) @map("is_enabled")
+  /// Auto-create users on first login (just-in-time provisioning)
+  allowJitProvisioning Boolean   @default(true) @map("allow_jit_provisioning")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@index([isEnabled])
+  @@index([enforceDomain])
+  @@map("saml_configs")
+}
+
+
+// ============================================================
+// CI/CD BUILD RUN MODELS
+// ============================================================
+
+model BuildRun {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  issueId      String    @map("issue_id") @db.Uuid
+  provider     String    @db.VarChar(20)   // "github" | "gitlab"
+  runId        String    @map("run_id") @db.VarChar(100)
+  pipelineName String    @map("pipeline_name") @db.VarChar(255)
+  status       String    @db.VarChar(20)   // pending | running | success | failure | cancelled | skipped
+  conclusion   String?   @db.VarChar(20)   // success | failure | neutral | cancelled | timed_out | action_required | skipped
+  url          String    @db.VarChar(500)
+  commitSha    String    @map("commit_sha") @db.VarChar(40)
+  branchRef    String?   @map("branch_ref") @db.VarChar(255)
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, provider, runId])
+  @@index([issueId])
+  @@index([provider])
+  @@index([status])
+  @@index([createdAt])
+  @@map("build_runs")
+}

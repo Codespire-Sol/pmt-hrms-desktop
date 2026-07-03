@@ -1,0 +1,138 @@
+name: Build Desktop App
+
+# ---------------------------------------------------------------------------
+# Repo-root workflow (the GitHub repository root is this folder, the PARENT of
+# electron-app/). All build steps `cd` into electron-app via working-directory.
+#
+# Trigger: pushing a version tag like v1.0.0 builds and publishes installers to
+# a GitHub Release. Also runnable manually from the Actions tab.
+# ---------------------------------------------------------------------------
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+# electron-builder needs to create the GitHub Release and upload assets.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Build each OS natively — a Windows .exe must be built on Windows and a
+      # macOS universal .dmg on macOS. Do not cross-compile.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    # Every run step executes inside the electron-app subfolder.
+    defaults:
+      run:
+        working-directory: electron-app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          # Lockfiles live under electron-app + the monorepo's apps/*.
+          cache-dependency-path: |
+            electron-app/pnpm-lock.yaml
+            apps/**/pnpm-lock.yaml
+
+      # Install the electron-app's own deps (electron, electron-builder,
+      # electron-updater, @electron/notarize, sharp, png-to-ico, png2icons,
+      # embedded-postgres, etc.).
+      - name: Install electron-app dependencies
+        run: pnpm install
+
+      # Generate real square app icons (build/icon.png|ico|icns) from the
+      # Codespire mark before packaging.
+      - name: Generate icons
+        run: node scripts/make-icons.js
+
+      # Build the api + web apps and stage them into resources/.
+      - name: Prebuild (build api + web, stage resources)
+        run: node scripts/prebuild.js
+
+      # Build + publish the installer for this OS. `--publish always` uploads to
+      # the GitHub Release configured under `publish:` in electron-builder.yml
+      # (and writes latest.yml / latest-mac.yml that electron-updater consumes).
+      - name: Build & publish
+        run: pnpm exec electron-builder --config electron-builder.yml --publish always
+        env:
+          # GitHub token to create/publish the release. Auto-provided; the job
+          # has `contents: write` above, so no manual secret setup is required.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Build UNSIGNED. IMPORTANT: do NOT wire empty CSC_LINK/WIN_CSC_LINK
+          # env vars from unset secrets — electron-builder treats an empty
+          # CSC_LINK as a certificate FILE PATH and fails with "<dir> not a file".
+          # Disabling identity auto-discovery makes the macOS build produce an
+          # unsigned app cleanly. (Windows is unsigned simply by not setting
+          # WIN_CSC_LINK.) Users get an OS "unidentified developer" warning until
+          # signing is added; the build still publishes and auto-updates fine.
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+          # -----------------------------------------------------------------
+          # TO ENABLE SIGNED / NOTARIZED installers later:
+          #   1. Add the secrets under Settings > Secrets and variables > Actions.
+          #   2. Remove the CSC_IDENTITY_AUTO_DISCOVERY line above.
+          #   3. Uncomment the matching lines below.
+          #
+          # Windows Authenticode (WIN_CSC_LINK = base64 .pfx, WIN_CSC_KEY_PASSWORD):
+          #   WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          #   WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # macOS Developer ID (CSC_LINK = base64 .p12, CSC_KEY_PASSWORD):
+          #   CSC_LINK: ${{ secrets.CSC_LINK }}
+          #   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # macOS notarization (all three required; used by scripts/notarize.js):
+          #   APPLE_ID: ${{ secrets.APPLE_ID }}
+          #   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          #   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # -----------------------------------------------------------------
+
+      # Also upload the installers as workflow artifacts for inspection.
+      - name: Upload installers as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmt-hrms-${{ matrix.os }}
+          path: |
+            electron-app/release/*.exe
+            electron-app/release/*.dmg
+          if-no-files-found: ignore
+
+# ---------------------------------------------------------------------------
+# REPOSITORY SECRETS TO CONFIGURE (Settings > Secrets and variables > Actions).
+# ALL are optional — with none set, an unsigned build is published and updates
+# still work.
+#
+#   Windows signing:
+#     WIN_CSC_LINK                 base64-encoded .pfx (or path/URL)
+#     WIN_CSC_KEY_PASSWORD         password for the .pfx
+#
+#   macOS signing (needed for a distributable build):
+#     CSC_LINK                     base64-encoded Developer ID .p12 (or path/URL)
+#     CSC_KEY_PASSWORD             password for the .p12
+#
+#   macOS notarization (needs all three):
+#     APPLE_ID                     Apple developer account email
+#     APPLE_APP_SPECIFIC_PASSWORD  app-specific password
+#     APPLE_TEAM_ID                Apple Team ID
+#
+#   GH_TOKEN is provided automatically as secrets.GITHUB_TOKEN — no setup needed
+#   given the `contents: write` permission above.
+# ---------------------------------------------------------------------------

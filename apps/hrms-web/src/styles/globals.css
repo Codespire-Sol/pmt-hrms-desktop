@@ -1,0 +1,329 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #1268ff;
+  --bg-color: #F8F9FC;
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --border-radius: 12px;
+  --text-main: #111827;
+  --text-secondary: #4b5563;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Prevent iOS Safari horizontal bounce / overscroll */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Consistent base font size so Select/Input/Tag all match */
+  font-size: 14px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+/* Ant Design Global Overrides */
+.ant-layout {
+  background: var(--bg-color) !important;
+}
+
+.ant-card {
+  border-radius: 16px !important;
+  border: 1px solid #f0f0f0 !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: all 0.2s ease !important;
+}
+
+.ant-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.08) !important;
+}
+
+/* Keep sidebar/header non-interactive while a modal is VISIBLY open. */
+body.ant-scrolling-effect .main-sidebar,
+body.ant-scrolling-effect .main-header {
+  pointer-events: none !important;
+}
+
+/* Sidebar scrollbar — ultra-thin */
+.main-sidebar nav::-webkit-scrollbar {
+  width: 3px;
+  display: block;
+}
+.main-sidebar nav::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 999px;
+}
+.main-sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.main-sidebar nav {
+  scrollbar-width: thin;
+  scrollbar-color: #E5E7EB transparent;
+}
+
+/* Hide scrollbars globally but keep scrolling */
+*::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbars inside inner containers (cards, panels, etc.) */
+.ant-card-body::-webkit-scrollbar,
+.ant-modal-body::-webkit-scrollbar,
+.ant-drawer-body::-webkit-scrollbar,
+.ant-table-body::-webkit-scrollbar,
+.ant-list::-webkit-scrollbar {
+  display: none;
+}
+
+.ant-card-body,
+.ant-modal-body,
+.ant-drawer-body,
+.ant-table-body,
+.ant-list {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ant-btn {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.ant-statistic-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.ant-table-wrapper {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.ant-table-thead>tr>th {
+  background: #fafafa !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+/* Custom Utilities */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.codespire-gradient-bg {
+  background: linear-gradient(135deg, #1268ff 0%, #004ecc 100%) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ant-card,
+  .ant-btn {
+    transition: none !important;
+  }
+  .ant-card:hover {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .ant-layout-content {
+    margin: 12px 16px !important;
+  }
+
+  .ant-card-body {
+    padding: 16px !important;
+  }
+
+  .ant-statistic-title {
+    font-size: 11px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 18px !important;
+  }
+
+  .ant-breadcrumb {
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
+  }
+
+  h1 {
+    font-size: 22px !important;
+  }
+
+  h2 {
+    font-size: 18px !important;
+  }
+
+  /* Ensure horizontal-scrollable table wrapper doesn't cause page overflow */
+  .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent table cells from wrapping text into multiple lines */
+  .ant-table-cell {
+    white-space: nowrap !important;
+  }
+
+  /* Except employee-name cells which are explicitly truncated */
+  .ant-table-cell .ant-typography {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Make Select and Input fonts consistent on mobile */
+  .ant-select-selector,
+  .ant-input,
+  .ant-input-affix-wrapper {
+    font-size: 14px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  }
+
+  /* Consistent tag font */
+  .ant-tag {
+    font-size: 11px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  }
+
+  /* Ant Space adjustments for mobile */
+  .ant-space-horizontal {
+    flex-wrap: wrap !important;
+  }
+
+  /* Modal should be full-width on mobile */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px !important;
+  }
+
+  /* Tabs should scroll horizontally on mobile */
+  .ant-tabs-nav {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Collapse panels padding */
+  .ant-collapse-content-box {
+    padding: 12px !important;
+  }
+
+  /* Form layout on mobile: always vertical */
+  .ant-form-item {
+    margin-bottom: 14px !important;
+  }
+
+  /* Segmented full width on mobile */
+  .mobile-segmented-full .ant-segmented {
+    width: 100% !important;
+  }
+
+  /* Dropdown menus max-width */
+  .ant-select-dropdown {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Notification panel mobile width */
+  .ant-dropdown {
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+/* Global font consistency for Select dropdowns and Input fields */
+.ant-select-selector,
+.ant-select-item-option-content,
+.ant-input,
+.ant-input-affix-wrapper {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 14px !important;
+}
+
+/* Admin calendar + holiday equal-height grid — stack on mobile/tablet */
+@media (max-width: 1024px) {
+  .admin-cal-holiday-row {
+    grid-template-columns: 1fr !important;
+  }
+  /* On mobile, holiday card can't use absolute positioning (no grid row height) */
+  .holiday-card-wrapper {
+    position: static !important;
+    max-height: 420px;
+  }
+  .holiday-card-inner {
+    position: static !important;
+    inset: unset !important;
+    max-height: 420px;
+  }
+}
+
+/* Prevent any fixed-position elements from causing horizontal overflow on iOS */
+.ant-layout {
+  overflow-x: hidden;
+}
+
+/* Thin visible scrollbar for holiday container */
+.holiday-scroll-container {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+}
+.holiday-scroll-container::-webkit-scrollbar {
+  width: 3px !important;
+  display: block !important;
+}
+.holiday-scroll-container::-webkit-scrollbar-thumb {
+  background: #cdd5df;
+  border-radius: 999px;
+}
+.holiday-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}

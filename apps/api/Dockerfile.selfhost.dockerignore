@@ -1,0 +1,19 @@
+# Ignore file for the build-from-source image (overrides .dockerignore, which
+# is written for the CI artifact build and excludes src/).
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+logs/
+coverage/
+.nyc_output/
+junit.xml
+uploads/*
+!uploads/.gitkeep
+.claude
+.vscode
+.idea

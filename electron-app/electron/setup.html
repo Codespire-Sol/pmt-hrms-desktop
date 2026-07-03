@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codespire PMT-HRMS — Set up admin</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; gap: 24px; background: #0f172a; color: #e2e8f0; padding: 32px;
+    }
+    .head { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+    .head img { height: 64px; width: auto; }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    p.sub { margin: 0; color: #94a3b8; max-width: 420px; }
+    form {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 24px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px;
+    }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #cbd5e1; }
+    input {
+      background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0;
+      padding: 10px 12px; font-size: 14px; outline: none; transition: border-color .15s;
+    }
+    input:focus { border-color: #3b82f6; }
+    button {
+      margin-top: 4px; background: #2563eb; color: #fff; border: none; border-radius: 8px;
+      padding: 11px 14px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: #1d4ed8; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .msg { font-size: 13px; min-height: 18px; }
+    .msg.error { color: #f87171; }
+    .msg.ok { color: #4ade80; }
+    .hint { font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <img src="icon.png" alt="Codespire" />
+    <h1>Create your admin account</h1>
+    <p class="sub">Welcome. Set up the administrator account for this installation. You'll use these credentials to sign in to PMT and HRMS.</p>
+  </div>
+
+  <form id="setup-form" autocomplete="off">
+    <label>
+      Email
+      <input id="email" type="email" placeholder="admin@yourcompany.com" required />
+    </label>
+    <label>
+      Password
+      <input id="password" type="password" placeholder="Choose a strong password" required minlength="8" />
+    </label>
+    <label>
+      Confirm password
+      <input id="confirm" type="password" placeholder="Re-enter password" required minlength="8" />
+    </label>
+    <div class="hint">Use at least 8 characters. This account is stored locally on this machine.</div>
+    <div id="msg" class="msg" role="status" aria-live="polite"></div>
+    <button id="submit" type="submit">Create admin account</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('setup-form');
+    const emailEl = document.getElementById('email');
+    const passEl = document.getElementById('password');
+    const confirmEl = document.getElementById('confirm');
+    const submitBtn = document.getElementById('submit');
+    const msg = document.getElementById('msg');
+
+    function setMsg(text, kind) {
+      msg.textContent = text || '';
+      msg.className = 'msg' + (kind ? ' ' + kind : '');
+    }
+
+    // If an admin already exists (e.g. created in another window), skip the form.
+    window.desktop.getSetupState().then((state) => {
+      if (state && state.hasAdmin) {
+        setMsg('An admin account already exists. Opening the app…', 'ok');
+        // Trigger the main process to move to the launcher via a no-op create
+        // (which returns alreadyExists and swaps the window).
+        window.desktop.createAdmin({ email: '', password: '' });
+      }
+    }).catch(() => {});
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg('');
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+      const confirm = confirmEl.value;
+
+      if (!email || !password) { setMsg('Email and password are required.', 'error'); return; }
+      if (password.length < 8) { setMsg('Password must be at least 8 characters.', 'error'); return; }
+      if (password !== confirm) { setMsg('Passwords do not match.', 'error'); return; }
+
+      submitBtn.disabled = true;
+      setMsg('Creating account…');
+      try {
+        const res = await window.desktop.createAdmin({ email, password });
+        if (res && res.success) {
+          setMsg('Admin account created. Opening the app…', 'ok');
+          // Main process loads the launcher; nothing more to do here.
+        } else {
+          setMsg((res && res.error) || 'Could not create the admin account.', 'error');
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        setMsg(String(err && err.message ? err.message : err), 'error');
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

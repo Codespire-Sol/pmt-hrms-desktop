@@ -1,0 +1,17 @@
+# MOVED — this file is intentionally NOT the active CI workflow.
+#
+# GitHub only runs workflows found in `.github/workflows/` at the REPOSITORY
+# ROOT. This electron-app/ folder is a SUBDIRECTORY of the repo, so a workflow
+# here is never executed by GitHub Actions.
+#
+# The real, active workflow lives at the repo root:
+#
+#     <repo-root>/.github/workflows/build-desktop.yml
+#
+# It checks out the repo, sets up Node 22 + pnpm, then runs (inside electron-app)
+# `pnpm install` -> `node scripts/make-icons.js` -> `node scripts/prebuild.js`
+# -> `pnpm exec electron-builder --config electron-builder.yml --publish always`
+# on a windows-latest + macos-latest matrix, triggered by pushing a `v*` tag.
+#
+# This stub is kept only as a pointer. Do not add steps here — edit the
+# root-level workflow instead. You may delete this file entirely.

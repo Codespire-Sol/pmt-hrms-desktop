@@ -1,0 +1,158 @@
+# PMT + HRMS — SLIM LOCAL stack for the desktop/non-coder deployment.
+# Keycloak REMOVED. Auth = local JWT (email/password). Everything runs on one PC.
+#
+#   cp .env.local.example .env      # installer generates this automatically
+#   docker compose -f docker-compose.local.yml up -d --build
+#
+# Services: postgres (pgvector) · redis · api · pmt-web · hrms-web
+# Team members connect via browser to  http://<HOST_LAN_IP>:3001 (PMT) / :3000 (HRMS)
+
+name: pmt-hrms-local
+
+services:
+  postgres:
+    # MUST be pgvector — a migration runs `CREATE EXTENSION vector`.
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-projectflow}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-projectflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [pmt-hrms]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [pmt-hrms]
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.selfhost
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: "4000"
+      API_VERSION: v1
+      # --- Auth: LOCAL JWT (no Keycloak) ---
+      AUTH_MODE: jwt
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@local.host}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me-in-production-0001}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-jwt-refresh-secret-change-me-in-prod-0002}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      # --- Database ---
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: ${DATABASE_NAME:-projectflow}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      DATABASE_SSL: "false"
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-projectflow}
+      # --- Redis (set BOTH forms — code reads REDIS_URL and REDIS_HOST/PORT) ---
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_URL: redis://redis:6379
+      # --- LAN URLs / CORS (installer replaces localhost with the host LAN IP) ---
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      HRMS_FRONTEND_URL: ${HRMS_FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      # --- Storage (local disk, persisted volume) ---
+      UPLOAD_DIR: /app/uploads
+      # --- Attendance rules (configured via env; edit .env then restart api) ---
+      COMPANY_TIMEZONE: ${COMPANY_TIMEZONE:-Asia/Kolkata}
+      FULL_DAY_HOURS: ${FULL_DAY_HOURS:-9}
+      HALF_DAY_HOURS: ${HALF_DAY_HOURS:-4}
+      OFFICE_START_TIME: ${OFFICE_START_TIME:-09:30}
+      # --- Optional (blank = feature off) ---
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "4000:4000"
+    volumes:
+      - api_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:4000/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    networks: [pmt-hrms]
+
+  pmt-web:
+    build:
+      context: ./apps/pmt-web
+      dockerfile: Dockerfile.selfhost
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      SERVER_PORT: "8080"
+      APP_NAME: ProjectFlow
+      BACKEND_URL: http://api:4000
+      API_PATH_PREFIX: /api
+      VITE_API_URL: /api
+      VITE_API_VERSION: v1
+      VITE_APP_NAME: ProjectFlow
+      # Local JWT login (no Keycloak) — the SPA renders an email/password login.
+      VITE_AUTH_MODE: jwt
+      # Host LAN IP (installer sets it) so the Share button shows a team-openable link
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
+    ports:
+      - "3001:8080"
+    networks: [pmt-hrms]
+
+  hrms-web:
+    build:
+      context: ./apps/hrms-web
+      dockerfile: Dockerfile.selfhost
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      SERVER_PORT: "8080"
+      APP_NAME: HRMS
+      BACKEND_URL: http://api:4000
+      API_PATH_PREFIX: /api
+      VITE_API_URL: /api
+      VITE_API_VERSION: v1
+      VITE_APP_NAME: HRMS
+      VITE_AUTH_MODE: jwt
+      # Host LAN IP (installer sets it) so the Share button shows a team-openable link
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
+    ports:
+      - "3000:8080"
+    networks: [pmt-hrms]
+
+volumes:
+  pg_data:
+  redis_data:
+  api_uploads:
+
+networks:
+  pmt-hrms:
+    driver: bridge

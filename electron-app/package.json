@@ -1,0 +1,41 @@
+{
+  "name": "codespire-pmt-hrms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Codespire PMT-HRMS desktop app: bundles embedded PostgreSQL, the Express API, and both SPAs. No Docker required.",
+  "author": "CodeSpire Solutions",
+  "license": "Elastic-2.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "//": "dist:* are placeholders — the actual electron-builder config lives in electron-builder.yml (owned by a teammate).",
+    "dist": "electron-builder --config electron-builder.yml",
+    "dist:win": "electron-builder --win --config electron-builder.yml",
+    "dist:mac": "electron-builder --mac --config electron-builder.yml",
+    "dist:linux": "electron-builder --linux --config electron-builder.yml",
+    "make-icons": "node scripts/make-icons.js"
+  },
+  "dependencies": {
+    "embedded-postgres": "16.14.0-beta.17",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^25.1.8",
+    "@electron/notarize": "^2.5.0",
+    "sharp": "^0.33.5",
+    "png-to-ico": "^2.1.8",
+    "png2icons": "^2.0.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "sharp",
+      "@embedded-postgres/windows-x64",
+      "@embedded-postgres/darwin-x64",
+      "@embedded-postgres/darwin-arm64",
+      "@embedded-postgres/linux-x64",
+      "@embedded-postgres/linux-arm64"
+    ]
+  }
+}
