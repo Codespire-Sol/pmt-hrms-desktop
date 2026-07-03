@@ -1,0 +1,22 @@
+# Normalize text files by default; git decides line endings on checkout.
+* text=auto
+
+# Shell scripts MUST stay LF or they won't run on macOS/Linux
+# (a CRLF breaks the "#!/usr/bin/env bash" shebang).
+*.command  text eol=lf
+*.sh       text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Windows scripts stay CRLF
+*.bat      text eol=crlf
+*.ps1      text eol=crlf
+
+# Binary assets — never touch
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

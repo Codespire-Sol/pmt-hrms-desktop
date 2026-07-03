@@ -1,0 +1,104 @@
+{
+  "name": "ProjectFlow AI",
+  "short_name": "ProjectFlow",
+  "description": "AI-powered project management platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Issue",
+      "short_name": "New Issue",
+      "description": "Create a new issue",
+      "url": "/issues/new",
+      "icons": [{ "src": "/icons/shortcut-new.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Board",
+      "short_name": "Board",
+      "description": "Open Kanban board",
+      "url": "/board",
+      "icons": [{ "src": "/icons/shortcut-board.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Issues",
+      "short_name": "My Tasks",
+      "description": "View assigned issues",
+      "url": "/issues?assignee=me",
+      "icons": [{ "src": "/icons/shortcut-tasks.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard view"
+    },
+    {
+      "src": "/screenshots/mobile-board.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile Kanban board"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

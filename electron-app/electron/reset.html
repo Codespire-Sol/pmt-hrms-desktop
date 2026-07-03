@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset admin password</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0f172a; color: #e2e8f0; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .head { display: flex; align-items: center; gap: 10px; }
+    .head img { height: 28px; width: auto; }
+    h1 { margin: 0; font-size: 16px; font-weight: 700; }
+    p.sub { margin: 0; color: #94a3b8; font-size: 12px; }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #cbd5e1; }
+    input {
+      background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0;
+      padding: 9px 11px; font-size: 13px; outline: none; transition: border-color .15s;
+    }
+    input:focus { border-color: #3b82f6; }
+    .row { display: flex; gap: 8px; }
+    .row button.secondary { white-space: nowrap; }
+    button {
+      background: #2563eb; color: #fff; border: none; border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: #1d4ed8; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    button.secondary { background: #334155; }
+    button.secondary:hover:not(:disabled) { background: #475569; }
+    .msg { font-size: 12px; min-height: 16px; }
+    .msg.error { color: #f87171; }
+    .msg.ok { color: #4ade80; }
+    .hint { font-size: 11px; color: #64748b; }
+    details summary { cursor: pointer; font-size: 12px; color: #94a3b8; }
+    details[open] summary { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <img src="icon.png" alt="Codespire" />
+    <div>
+      <h1>Reset admin password</h1>
+      <p class="sub">Sets a new password for the admin account. All data is preserved.</p>
+    </div>
+  </div>
+
+  <form id="reset-form" autocomplete="off">
+    <label>
+      New password
+      <input id="password" type="text" placeholder="Enter a new password" required minlength="8" />
+    </label>
+    <label>
+      Confirm password
+      <input id="confirm" type="password" placeholder="Re-enter password" required minlength="8" />
+    </label>
+    <div class="row">
+      <button id="generate" type="button" class="secondary">Generate strong password</button>
+    </div>
+
+    <details>
+      <summary>Advanced: target a specific admin email</summary>
+      <label style="margin-top:8px;">
+        Admin email (optional)
+        <input id="email" type="email" placeholder="Leave blank for the primary admin" />
+      </label>
+    </details>
+
+    <div class="hint">The new password (shown above) becomes active immediately.</div>
+    <div id="msg" class="msg" role="status" aria-live="polite"></div>
+    <button id="submit" type="submit">Reset password</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('reset-form');
+    const passEl = document.getElementById('password');
+    const confirmEl = document.getElementById('confirm');
+    const emailEl = document.getElementById('email');
+    const submitBtn = document.getElementById('submit');
+    const genBtn = document.getElementById('generate');
+    const msg = document.getElementById('msg');
+
+    function setMsg(text, kind) {
+      msg.textContent = text || '';
+      msg.className = 'msg' + (kind ? ' ' + kind : '');
+    }
+
+    genBtn.addEventListener('click', async () => {
+      try {
+        const pw = await window.desktop.generatePassword();
+        // Reveal it (input is type=text) and fill both fields so it's ready to submit.
+        passEl.type = 'text';
+        confirmEl.type = 'text';
+        passEl.value = pw;
+        confirmEl.value = pw;
+        setMsg('Generated a strong password — copy it somewhere safe before resetting.', 'ok');
+      } catch (err) {
+        setMsg(String(err && err.message ? err.message : err), 'error');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg('');
+      const password = passEl.value;
+      const confirm = confirmEl.value;
+      const email = emailEl.value.trim();
+
+      if (!password) { setMsg('A new password is required.', 'error'); return; }
+      if (password.length < 8) { setMsg('Password must be at least 8 characters.', 'error'); return; }
+      if (password !== confirm) { setMsg('Passwords do not match.', 'error'); return; }
+
+      submitBtn.disabled = true;
+      setMsg('Resetting…');
+      try {
+        const res = await window.desktop.resetAdmin(email ? { password, email } : { password });
+        if (res && res.success) {
+          // Main process shows a confirmation dialog and closes this window.
+          setMsg('Password reset.', 'ok');
+        } else {
+          setMsg((res && res.error) || 'Could not reset the password.', 'error');
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        setMsg(String(err && err.message ? err.message : err), 'error');
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
