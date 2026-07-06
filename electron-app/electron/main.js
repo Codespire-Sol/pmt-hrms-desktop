@@ -365,16 +365,47 @@ function loadHome() {
 // Always-visible menu bar so the user can switch between PMT and HRMS at any
 // time (not just from the first launcher screen).
 function buildAppMenu() {
+  const isMac = process.platform === 'darwin';
+
+  // Shared Quit item. Binding CmdOrCtrl+Q guarantees the keyboard shortcut is
+  // wired to a REAL quit on every platform (the before-quit handler then cleans
+  // up the API + Postgres). Setting isQuitting here too is belt-and-suspenders.
+  const quitItem = {
+    label: 'Quit Codespire PMT-HRMS',
+    accelerator: 'CmdOrCtrl+Q',
+    click: () => { isQuitting = true; app.quit(); },
+  };
+
   const template = [
+    // macOS turns the FIRST submenu into the bold application menu. Without a
+    // proper one, Cmd+Q has nothing to bind to and macOS users get no standard
+    // Quit — a big reason the app felt un-closable on Mac. Provide the expected
+    // roles (About / Hide / Quit ⌘Q).
+    ...(isMac
+      ? [{
+          label: app.name,
+          submenu: [
+            { role: 'about' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            quitItem,
+          ],
+        }]
+      : []),
     {
       label: 'Apps',
       submenu: [
-        { label: 'Home (choose app)', accelerator: 'CmdOrCtrl+H', click: () => loadHome() },
+        // Cmd+H is the system Hide shortcut on macOS, so use Shift+H for Home to
+        // avoid clobbering it.
+        { label: 'Home (choose app)', accelerator: 'CmdOrCtrl+Shift+H', click: () => loadHome() },
         { type: 'separator' },
         { label: 'Open PMT (Project Management)', accelerator: 'CmdOrCtrl+1', click: () => loadUi('pmt') },
         { label: 'Open HRMS (HR Management)', accelerator: 'CmdOrCtrl+2', click: () => loadUi('hrms') },
         { type: 'separator' },
-        { label: 'Quit Codespire PMT-HRMS', click: () => { isQuitting = true; app.quit(); } },
+        quitItem,
       ],
     },
     {
@@ -711,25 +742,36 @@ app.on('window-all-closed', (e) => {
 });
 
 // Clean shutdown: stop API child, then Postgres.
+//
+// CRITICAL: set `isQuitting = true` FIRST, unconditionally. Any quit request —
+// Cmd+Q, Dock > Quit, the macOS app menu, the OS shutting down, or our own
+// menu/tray Quit — routes through here. If we don't flip the flag before the
+// window's `close` handler runs, that handler calls preventDefault()+hide() and
+// silently swallows the quit, making the app impossible to close (the exact
+// macOS "it won't quit / had to kill it from Terminal" symptom).
+let shuttingDown = false;
 app.on('before-quit', async (e) => {
-  if (isQuitting && (apiChild || db)) {
-    e.preventDefault();
-    isQuitting = true;
+  isQuitting = true;
 
-    try {
-      if (apiChild) {
-        console.log('[main] Stopping API child...');
-        apiChild.kill('SIGTERM');
-        apiChild = null;
-      }
-      if (hrmsServer) hrmsServer.close();
-      if (pmtServer) pmtServer.close();
-      if (db) await db.stop();
-    } catch (err) {
-      console.error('[main] Error during shutdown:', err);
-    } finally {
-      app.exit(0);
+  // Nothing left to tear down (or a teardown is already in flight) → let the
+  // default quit proceed so the app actually exits.
+  if (shuttingDown || (!apiChild && !db && !hrmsServer && !pmtServer)) return;
+
+  shuttingDown = true;
+  e.preventDefault();
+  try {
+    if (apiChild) {
+      console.log('[main] Stopping API child...');
+      apiChild.kill('SIGTERM');
+      apiChild = null;
     }
+    if (hrmsServer) { try { hrmsServer.close(); } catch { /* already closed */ } hrmsServer = null; }
+    if (pmtServer) { try { pmtServer.close(); } catch { /* already closed */ } pmtServer = null; }
+    if (db) { await db.stop(); db = null; }
+  } catch (err) {
+    console.error('[main] Error during shutdown:', err);
+  } finally {
+    app.exit(0);
   }
 });
 
