@@ -183,7 +183,10 @@ function startApi(databaseUrl, secrets) {
     // config resolves), so we must also set the split parts even though
     // DATABASE_URL already carries the connection. Values mirror db.js.
     DATABASE_HOST: '127.0.0.1',
-    DATABASE_PORT: '5432',
+    // The embedded cluster binds to a fresh free port every launch (db.js
+    // getFreePort()) so it never collides with a system Postgres already
+    // using 5432 — mirror whatever port it actually picked, not a fixed one.
+    DATABASE_PORT: String(db.port),
     DATABASE_NAME: db.databaseName,
     DATABASE_USER: 'postgres',
     DATABASE_PASSWORD: 'postgres',
@@ -759,6 +762,16 @@ app.on('before-quit', async (e) => {
 
   shuttingDown = true;
   e.preventDefault();
+
+  // Never let a slow/hung teardown (e.g. Postgres taking a while to stop)
+  // prevent the app from actually quitting — force-exit after a timeout so
+  // Cmd+Q / Dock Quit / tray Quit always works within a bounded time.
+  const forceExitTimer = setTimeout(() => {
+    console.error('[main] Shutdown timed out after 5s — forcing exit.');
+    app.exit(0);
+  }, 5000);
+  forceExitTimer.unref();
+
   try {
     if (apiChild) {
       console.log('[main] Stopping API child...');
@@ -771,6 +784,7 @@ app.on('before-quit', async (e) => {
   } catch (err) {
     console.error('[main] Error during shutdown:', err);
   } finally {
+    clearTimeout(forceExitTimer);
     app.exit(0);
   }
 });

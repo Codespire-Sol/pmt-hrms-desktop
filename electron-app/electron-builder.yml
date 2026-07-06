@@ -98,6 +98,15 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # Ad-hoc sign (no paid Developer ID cert needed) when CSC_LINK isn't set.
+  # Without ANY signature, the final bundle — resealed after extraResources are
+  # copied in — fails Gatekeeper's integrity check and macOS shows a dead-end
+  # "app is damaged, move to Trash" dialog with no way to open it. Ad-hoc
+  # signing produces a valid seal, which downgrades that to the normal
+  # "unidentified developer" prompt a user can get past via right-click > Open.
+  # If CSC_LINK (a real Developer ID cert) is provided in CI, electron-builder
+  # uses that instead and this identity is ignored.
+  identity: "-"
 
 dmg:
   title: PMT-HRMS ${version}
