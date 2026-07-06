@@ -11,6 +11,20 @@ const TOKEN_BLACKLIST_PREFIX = 'token:bl';
 const ACCESS_TOKEN_COOKIE = 'pf_access_token';
 const REFRESH_TOKEN_COOKIE = 'pf_refresh_token';
 
+/**
+ * Whether to set the `Secure` flag on auth cookies. This MUST follow the actual
+ * transport, NOT NODE_ENV. The desktop edition runs with NODE_ENV=production but
+ * serves over plain HTTP on the office LAN, where browsers silently DROP Secure
+ * cookies — which kills the httpOnly cookie auth and forces weaker localStorage
+ * tokens. So: honour an explicit COOKIE_SECURE if set, otherwise derive it from
+ * the frontend URL scheme (https => secure, http => not).
+ */
+function useSecureCookies(): boolean {
+  const explicit = process.env.COOKIE_SECURE;
+  if (explicit !== undefined && explicit !== '') return explicit === 'true';
+  return (process.env.FRONTEND_URL || '').startsWith('https://');
+}
+
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -27,7 +41,7 @@ export class AuthController {
 
     const result = await this.authService.login(String(email), String(password), Boolean(rememberMe));
 
-    const secure = process.env.NODE_ENV === 'production';
+    const secure = useSecureCookies();
     res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
       httpOnly: true, secure, sameSite: 'lax', path: '/',
     });
@@ -50,7 +64,7 @@ export class AuthController {
 
     const { accessToken } = await this.authService.refresh(String(refreshToken));
 
-    const secure = process.env.NODE_ENV === 'production';
+    const secure = useSecureCookies();
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true, secure, sameSite: 'lax', path: '/',
     });

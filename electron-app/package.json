@@ -1,6 +1,6 @@
 {
   "name": "codespire-pmt-hrms",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Codespire PMT-HRMS desktop app: bundles embedded PostgreSQL, the Express API, and both SPAs. No Docker required.",
   "author": "CodeSpire Solutions",
