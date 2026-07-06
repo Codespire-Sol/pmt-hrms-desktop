@@ -190,6 +190,10 @@ function startApi(databaseUrl, secrets) {
 
     // Auth: self-contained JWT mode (no Keycloak).
     AUTH_MODE: 'jwt',
+    // The desktop app serves over plain HTTP on the LAN, so the auth cookies
+    // must NOT be marked Secure (browsers drop Secure cookies over HTTP, which
+    // would break httpOnly-cookie auth). Explicit so it never ties to NODE_ENV.
+    COOKIE_SECURE: 'false',
     JWT_SECRET: secrets.JWT_SECRET,
     JWT_REFRESH_SECRET: secrets.JWT_REFRESH_SECRET,
     // No ADMIN_EMAIL/ADMIN_PASSWORD: the API must NOT auto-seed an admin. The
