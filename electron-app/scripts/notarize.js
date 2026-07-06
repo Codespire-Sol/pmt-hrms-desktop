@@ -3,15 +3,28 @@
  * ---------------------------------------------------------------------------
  * electron-builder `afterSign` hook.
  *
- * Notarizes the macOS app with Apple's notary service using @electron/notarize.
+ * Two jobs, both macOS-only:
  *
- * It is a NO-OP unless:
- *   - the platform being built is macOS, AND
- *   - all three of APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are set.
+ * 1. Ad-hoc (re-)sign the bundle when no paid Developer ID cert (CSC_LINK) is
+ *    configured. This is NOT redundant with electron-builder's own signing:
+ *    with CSC_IDENTITY_AUTO_DISCOVERY=false (set in CI because there is no
+ *    keychain identity to discover on a hosted runner), electron-builder skips
+ *    macOS code signing ENTIRELY, regardless of `mac.identity` in
+ *    electron-builder.yml. The app then ships with only Electron's own default
+ *    per-binary placeholder signature, whose outer-bundle seal is invalidated
+ *    once extraResources are copied in afterward (verified empirically: the
+ *    shipped app showed `Identifier=Electron`, `Sealed Resources=none`). macOS
+ *    treats that as a broken signature and shows a dead-end "app is damaged,
+ *    move to Trash" dialog with no way for a user to open it. Explicitly
+ *    running `codesign --sign -` here (exactly the command that fixes an
+ *    already-installed broken build) guarantees a valid ad-hoc seal, which
+ *    downgrades that to the normal, user-bypassable "unidentified developer"
+ *    prompt.
  *
- * This lets Windows builds and un-credentialed local mac builds proceed without
- * failing. Notarization only happens in CI (or locally) when the Apple
- * credentials are present in the environment.
+ * 2. Notarize with Apple's notary service using @electron/notarize — but only
+ *    if all three of APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are
+ *    set. This lets Windows builds and un-credentialed local/CI mac builds
+ *    proceed without failing.
  *
  * Docs: https://www.electron.build/configuration/mac  (afterSign)
  *       https://github.com/electron/notarize
@@ -20,14 +33,26 @@
 'use strict';
 
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
 module.exports = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
 
-  // Only notarize macOS builds.
+  // Only relevant for macOS builds.
   if (electronPlatformName !== 'darwin') {
     console.log('[notarize] Skipping: not a macOS build.');
     return;
+  }
+
+  const appName = context.packager.appInfo.productFilename;
+  const appPath = path.join(appOutDir, `${appName}.app`);
+
+  // Force an ad-hoc signature whenever we don't have a real Developer ID cert.
+  // See the file header for why this can't be left to electron-builder alone.
+  if (!process.env.CSC_LINK) {
+    console.log(`[notarize] No CSC_LINK — ad-hoc signing ${appPath}...`);
+    execFileSync('codesign', ['--force', '--deep', '--sign', '-', appPath], { stdio: 'inherit' });
+    console.log('[notarize] Ad-hoc signing complete.');
   }
 
   const {
@@ -57,9 +82,6 @@ module.exports = async function notarizing(context) {
     );
     return;
   }
-
-  const appName = context.packager.appInfo.productFilename;
-  const appPath = path.join(appOutDir, `${appName}.app`);
 
   console.log(`[notarize] Notarizing ${appPath} with Apple notary service...`);
 
