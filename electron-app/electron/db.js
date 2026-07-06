@@ -10,6 +10,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const net = require('node:net');
 // embedded-postgres is ESM-only. Electron's bundled Node does NOT support
 // require() of ES modules (ERR_REQUIRE_ESM), so it is loaded via a dynamic
 // import() inside start() below.
@@ -18,7 +19,6 @@ const path = require('node:path');
 // Bound to loopback only: Postgres is an internal dependency, it must NOT be
 // reachable from the LAN. Only the SPAs (3000/3001) and API (4000) are public.
 const PG_HOST = '127.0.0.1';
-const PG_PORT = 5432;
 const PG_USER = 'postgres';
 // Local-only superuser password. The DB is loopback-bound and lives inside the
 // user's own data dir, so this is a fixed internal credential, not a secret the
@@ -26,6 +26,24 @@ const PG_USER = 'postgres';
 const PG_PASSWORD = 'postgres';
 // Matches the API's default DATABASE_NAME (see apps/api/src/config/index.ts).
 const PG_DATABASE = 'projectflow';
+
+// Ask the OS for any currently-free loopback TCP port. Used instead of a fixed
+// port so the embedded cluster never collides with a system Postgres (e.g.
+// Homebrew's postgresql@17 on 5432) or anything else already listening. The
+// port is purely a same-session detail — the actual data lives in `dataDir`
+// and is keyed by that folder, not by which port Postgres happens to bind to,
+// so a different port on every launch has no effect on data persistence.
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', reject);
+    server.listen(0, PG_HOST, () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+  });
+}
 
 class Database {
   /**
@@ -35,13 +53,15 @@ class Database {
   constructor(dataDir) {
     this.dataDir = dataDir;
     this.pg = null;
+    // Assigned in start(); a fresh free port is picked on every launch.
+    this.port = null;
   }
 
-  /** postgresql://postgres:postgres@127.0.0.1:5432/projectflow */
+  /** postgresql://postgres:postgres@127.0.0.1:<port>/projectflow */
   get databaseUrl() {
     const user = encodeURIComponent(PG_USER);
     const pass = encodeURIComponent(PG_PASSWORD);
-    return `postgresql://${user}:${pass}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}`;
+    return `postgresql://${user}:${pass}@${PG_HOST}:${this.port}/${PG_DATABASE}`;
   }
 
   get databaseName() {
@@ -58,6 +78,9 @@ class Database {
 
     fs.mkdirSync(this.dataDir, { recursive: true });
 
+    // Pick a free loopback port for this session (see getFreePort() above).
+    this.port = await getFreePort();
+
     // Load the ESM-only embedded-postgres via dynamic import (require() throws
     // ERR_REQUIRE_ESM under Electron's Node).
     const { default: EmbeddedPostgres } = await import('embedded-postgres');
@@ -66,7 +89,7 @@ class Database {
       databaseDir: this.dataDir,
       user: PG_USER,
       password: PG_PASSWORD,
-      port: PG_PORT,
+      port: this.port,
       host: PG_HOST,
       persistent: true,     // keep the cluster + data between app launches
       // Force UTF8. On Windows, initdb otherwise picks the system locale's
@@ -83,7 +106,7 @@ class Database {
       await this.pg.initialise();
     }
 
-    console.log('[db] Starting PostgreSQL on', `${PG_HOST}:${PG_PORT}`);
+    console.log('[db] Starting PostgreSQL on', `${PG_HOST}:${this.port}`);
     await this.pg.start();
 
     await this.ensureDatabase();
