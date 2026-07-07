@@ -36,10 +36,8 @@ Grab the installer for your computer, then open it. Everything runs on your own 
 
 |  |  |
 |:---:|:---:|
-| <img src="docs/images/pmt-dashboard.png" alt="Project dashboard" width="420" /> | <img src="docs/images/pmt-board.png" alt="Kanban board" width="420" /> |
-| **Project dashboard** — every project at a glance | **Kanban board** — drag issues across your workflow |
-| <img src="docs/images/hrms-dashboard.png" alt="HR dashboard" width="420" /> | <img src="docs/images/hrms-attendance.png" alt="Attendance" width="420" /> |
-| **HR dashboard** — your whole workforce in one view | **Attendance** — daily clock-in and monthly summaries |
+| <img src="docs/images/pmt-dashboard.png" alt="Project dashboard" width="420" /><br/>**Project dashboard** — every project at a glance | <img src="docs/images/pmt-board.png" alt="Kanban board" width="420" /><br/>**Kanban board** — drag issues across your workflow |
+| <img src="docs/images/hrms-dashboard.png" alt="HR dashboard" width="420" /><br/>**HR dashboard** — your whole workforce in one view | <img src="docs/images/hrms-attendance.png" alt="Attendance" width="420" /><br/>**Attendance** — daily clock-in and monthly summaries |
 
 ---
 
